@@ -93,7 +93,7 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 PRODUCT_PACKAGES += \
 	gsm0710muxd
 
-# wifi
+# Wi-Fi
 PRODUCT_PACKAGES += \
 	lib_driver_cmd_mtk
 
@@ -102,7 +102,7 @@ PRODUCT_COPY_FILES += \
         $(LOCAL_PATH)/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf \
         $(LOCAL_PATH)/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
 
-# audio
+# Audio
 PRODUCT_PACKAGES += \
 	audio.r_submix.default \
 	audio.a2dp.default \
@@ -111,7 +111,12 @@ PRODUCT_PACKAGES += \
     libdashplayer \
     libxlog
 
+# PowerVR SGX544 GPU-Related
 PRODUCT_PACKAGES += \
 	libcorkscrew
+
+# Build Torch
+PRODUCT_PACKAGES += \
+	Torch
 	
 $(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
