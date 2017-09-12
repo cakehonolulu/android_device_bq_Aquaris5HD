@@ -50,6 +50,9 @@ TARGET_POWERHAL_VARIANT := cm
 # Bootloader
 TARGET_NO_BOOTLOADER := true
 
+# Build Custom Boot Image using MTK headers
+BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_FOLDER)/boot.mk
+
 # EGL settings
 BOARD_EGL_CFG := device/bq/Aquaris5HD/egl.cfg
 USE_OPENGL_RENDERER := true
