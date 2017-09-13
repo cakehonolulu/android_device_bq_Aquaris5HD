@@ -17,24 +17,22 @@ $(call inherit-product-if-exists, vendor/bq/Aquaris5HD/Aquaris5HD-vendor.mk)
 DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay/
 
 ifeq ($(TARGET_PREBUILT_KERNEL),)
-	LOCAL_KERNEL := $(LOCAL_PATH)/kernel
+	LOCAL_KERNEL := $(LOCAL_PATH)/prebuilt/kernel
 else
 	LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
 endif
 
+# Ramdisk
 PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/root/fstab.mt6589:root/fstab.mt6589
+	$(LOCAL_PATH)/rootdir/fstab.mt6589:root/fstab.mt6589 \
+	$(LOCAL_PATH)/rootdir/init.mt6589.rc:root/init.mt6589.rc \
+	$(LOCAL_PATH)/rootdir/init.modem.rc:root/init.modem.rc \
+	$(LOCAL_PATH)/rootdir/ueventd.mt6589.rc:root/ueventd.mt6589.rc \
+	$(LOCAL_PATH)/rootdir/init.protect.rc:root/init.protect.rc \
+	$(LOCAL_PATH)/rootdir/twrp.fstab:recovery/root/etc/twrp.fstab \
+	$(LOCAL_PATH)/rootdir/init.mt6589.usb.rc:/root/init.mt6589.usb.rc
 
-PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/recovery/twrp.fstab:recovery/root/etc/twrp.fstab
-
-PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/root/ueventd.mt6589.rc:root/ueventd.mt6589.rc \
-	$(LOCAL_PATH)/root/init.mt6589.rc:root/init.mt6589.rc \
-	$(LOCAL_PATH)/root/init.modem.rc:root/init.modem.rc \
-	$(LOCAL_PATH)/root/init.protect.rc:root/init.protect.rc \
-	$(LOCAL_PATH)/root/init.mt6589.usb.rc:/root/init.mt6589.usb.rc
-
+# Permissions
 PRODUCT_COPY_FILES += \
 	frameworks/native/data/etc/handheld_core_hardware.xml:system/etc/permissions/handheld_core_hardware.xml \
 	frameworks/native/data/etc/android.hardware.wifi.xml:system/etc/permissions/android.hardware.wifi.xml \
@@ -46,10 +44,6 @@ PRODUCT_COPY_FILES += \
 	frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
 	frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
 	frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml
-
-PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/media_codecs.xml:system/etc/media_codecs.xml \
-	$(LOCAL_PATH)/media_profiles.xml:system/etc/media_profile.xml
 
 PRODUCT_PROPERTY_OVERRIDES := \
 	fmradio.driver.chip=3 \
@@ -96,11 +90,10 @@ PRODUCT_PACKAGES += \
 # Wi-Fi
 PRODUCT_PACKAGES += \
 	lib_driver_cmd_mtk
-
 PRODUCT_COPY_FILES += \
-        $(LOCAL_PATH)/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf \
-        $(LOCAL_PATH)/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf \
-        $(LOCAL_PATH)/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
+        $(LOCAL_PATH)/configs/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf \
+        $(LOCAL_PATH)/configs/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf \
+        $(LOCAL_PATH)/configs/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
 
 # Audio
 PRODUCT_PACKAGES += \
@@ -110,6 +103,9 @@ PRODUCT_PACKAGES += \
 	libblisrc \
     libdashplayer \
     libxlog
+PRODUCT_COPY_FILES += \
+	$(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
+	$(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profile.xml
 
 # PowerVR SGX544 GPU-Related
 PRODUCT_PACKAGES += \

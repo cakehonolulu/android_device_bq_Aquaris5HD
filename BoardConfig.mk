@@ -54,7 +54,7 @@ TARGET_NO_BOOTLOADER := true
 BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_FOLDER)/boot.mk
 
 # EGL settings
-BOARD_EGL_CFG := device/bq/Aquaris5HD/egl.cfg
+BOARD_EGL_CFG := device/bq/Aquaris5HD/configs/egl.cfg
 USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 
@@ -71,8 +71,8 @@ BOARD_FLASH_BLOCK_SIZE := 512
 TARGET_USERIMAGES_USE_EXT4 := true
 
 # Recovery
-TARGET_RECOVERY_FSTAB := $(DEVICE_FOLDER)/recovery/twrp.fstab
-TARGET_PREBUILT_RECOVERY_KERNEL := $(DEVICE_FOLDER)/recovery/kernel
+TARGET_RECOVERY_FSTAB := $(DEVICE_FOLDER)/rootdir/twrp.fstab
+TARGET_PREBUILT_RECOVERY_KERNEL := $(DEVICE_FOLDER)/prebuilt/kernel
 BOARD_HAS_NO_SELECT_BUTTON := true
 
 # MKIMAGE
@@ -108,7 +108,6 @@ BOARD_SEPOLICY_UNION += \
 	file_contexts \
     device.te \
     netd.te
-
 
 # TWRP
 BOARD_HAS_LARGE_FILESYSTEM := true
