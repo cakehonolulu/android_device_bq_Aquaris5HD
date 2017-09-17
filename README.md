@@ -35,7 +35,7 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
 
  * SIM1/2 RIL [Data Connection and Calls] (Not tested)
  * Camera (Not tested)
- * HWComposer
+ * HWComposer (Not tested)
 
 ### Thanks to:
 
