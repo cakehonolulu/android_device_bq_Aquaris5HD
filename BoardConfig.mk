@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-DEVICE_FOLDER := device/bq/Aquaris5HD
-
--include vendor/bq/Aquaris5HD/BoardConfigVendor.mk
-
 # Platform
 TARGET_BOARD_PLATFORM := mt6589
 TARGET_ARCH := arm
@@ -49,9 +45,12 @@ TARGET_POWERHAL_VARIANT := cm
 
 # Bootloader
 TARGET_NO_BOOTLOADER := true
+TARGET_BOOTLOADER_BOARD_NAME := mt6589
 
 # Build Custom Boot Image using MTK headers
-BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_FOLDER)/boot.mk
+BOARD_CUSTOM_BOOTIMG_MK := device/bq/Aquaris5HD/boot.mk
+BOARD_MKBOOTIMG_ARGS := --board 1336460062
+BOARD_CUSTOM_BOOTIMG := true
 
 # EGL settings
 BOARD_EGL_CFG := device/bq/Aquaris5HD/configs/egl.cfg
@@ -59,7 +58,10 @@ USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 
 # Kernel
-TARGET_PREBUILT_KERNEL := $(DEVICE_FOLDER)/prebuilt/kernel
+TARGET_PREBUILT_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
+BOARD_KERNEL_CMDLINE :=
+BOARD_KERNEL_BASE := 0x10000000
+BOARD_KERNEL_PAGESIZE := 2048
 
 # Device Partitions
 BOARD_BOOTIMAGE_PARTITION_SIZE := 16777216
@@ -71,8 +73,8 @@ BOARD_FLASH_BLOCK_SIZE := 512
 TARGET_USERIMAGES_USE_EXT4 := true
 
 # Recovery
-TARGET_RECOVERY_FSTAB := $(DEVICE_FOLDER)/rootdir/twrp.fstab
-TARGET_PREBUILT_RECOVERY_KERNEL := $(DEVICE_FOLDER)/prebuilt/kernel
+TARGET_RECOVERY_FSTAB := device/bq/Aquaris5HD/rootdir/twrp.fstab
+TARGET_PREBUILT_RECOVERY_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
 BOARD_HAS_NO_SELECT_BUTTON := true
 
 # MKIMAGE
@@ -105,9 +107,10 @@ BOARD_SEPOLICY_DIRS += \
     device/bq/Aquaris5HD/sepolicy
 
 BOARD_SEPOLICY_UNION += \
-	file_contexts \
     device.te \
-    netd.te
+    pvrsrvctl.te \
+    netd.te \
+	file_contexts
 
 # TWRP
 BOARD_HAS_LARGE_FILESYSTEM := true

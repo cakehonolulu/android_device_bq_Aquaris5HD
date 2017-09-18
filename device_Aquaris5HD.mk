@@ -14,23 +14,23 @@
 
 $(call inherit-product-if-exists, vendor/bq/Aquaris5HD/Aquaris5HD-vendor.mk)
 
-DEVICE_PACKAGE_OVERLAYS += $(LOCAL_PATH)/overlay/
+DEVICE_PACKAGE_OVERLAYS += device/bq/Aquaris5HD/overlay/
 
 ifeq ($(TARGET_PREBUILT_KERNEL),)
-	LOCAL_KERNEL := $(LOCAL_PATH)/prebuilt/kernel
+	LOCAL_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
 else
 	LOCAL_KERNEL := $(TARGET_PREBUILT_KERNEL)
 endif
 
-# Ramdisk
+# RAM-Disk
 PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/rootdir/fstab.mt6589:root/fstab.mt6589 \
-	$(LOCAL_PATH)/rootdir/init.mt6589.rc:root/init.mt6589.rc \
-	$(LOCAL_PATH)/rootdir/init.modem.rc:root/init.modem.rc \
-	$(LOCAL_PATH)/rootdir/ueventd.mt6589.rc:root/ueventd.mt6589.rc \
-	$(LOCAL_PATH)/rootdir/init.protect.rc:root/init.protect.rc \
-	$(LOCAL_PATH)/rootdir/twrp.fstab:recovery/root/etc/twrp.fstab \
-	$(LOCAL_PATH)/rootdir/init.mt6589.usb.rc:/root/init.mt6589.usb.rc
+	device/bq/Aquaris5HD/rootdir/fstab.mt6589:root/fstab.mt6589 \
+	device/bq/Aquaris5HD/rootdir/init.mt6589.rc:root/init.mt6589.rc \
+	device/bq/Aquaris5HD/rootdir/init.modem.rc:root/init.modem.rc \
+	device/bq/Aquaris5HD/rootdir/ueventd.mt6589.rc:root/ueventd.mt6589.rc \
+	device/bq/Aquaris5HD/rootdir/init.protect.rc:root/init.protect.rc \
+	device/bq/Aquaris5HD/rootdir/twrp.fstab:recovery/root/etc/twrp.fstab \
+	device/bq/Aquaris5HD/rootdir/init.mt6589.usb.rc:/root/init.mt6589.usb.rc
 
 # Permissions
 PRODUCT_COPY_FILES += \
@@ -45,6 +45,7 @@ PRODUCT_COPY_FILES += \
 	frameworks/native/data/etc/android.hardware.camera.flash-autofocus.xml:system/etc/permissions/android.hardware.camera.flash-autofocus.xml \
 	frameworks/native/data/etc/android.hardware.camera.front.xml:system/etc/permissions/android.hardware.camera.front.xml
 
+# Additional MTK Build Properties
 PRODUCT_PROPERTY_OVERRIDES := \
 	fmradio.driver.chip=3 \
 	gps.solution.combo.chip=1 \
@@ -90,10 +91,6 @@ PRODUCT_PACKAGES += \
 # Wi-Fi
 PRODUCT_PACKAGES += \
 	lib_driver_cmd_mtk
-PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/configs/wpa_supplicant_overlay.conf:system/etc/wifi/wpa_supplicant_overlay.conf \
-	$(LOCAL_PATH)/configs/p2p_supplicant_overlay.conf:system/etc/wifi/p2p_supplicant_overlay.conf \
-	$(LOCAL_PATH)/configs/wpa_supplicant.conf:system/etc/wifi/wpa_supplicant.conf
 
 # Audio
 PRODUCT_PACKAGES += \
@@ -103,9 +100,6 @@ PRODUCT_PACKAGES += \
 	libblisrc \
     libdashplayer \
     libxlog
-PRODUCT_COPY_FILES += \
-	$(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
-	$(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profile.xml
 
 # PowerVR SGX544 GPU-Related
 PRODUCT_PACKAGES += \
