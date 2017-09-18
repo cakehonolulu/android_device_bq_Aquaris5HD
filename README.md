@@ -32,6 +32,7 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
  * Battery meter
  * WI-FI
  * Camera not showing in Launcher
+ * Flashlight
  
 ### What is not tested:
 
