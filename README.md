@@ -22,6 +22,8 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
 ### What's working:
 
  * Sound
+ * CPU Frequency Scaling
+ * No Hard-Reboots
  * Graphics
  * Storage
 
