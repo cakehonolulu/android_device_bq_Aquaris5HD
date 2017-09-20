@@ -19,9 +19,26 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
 
      * brunch Aquaris5HD
 
+### What's working:
+
+ * Sound
+ * CPU Frequency Scaling
+ * No Hard-Reboots
+ * Graphics
+ * Storage
+
 ### What's not working:
 
- * Everything (ROM Boots but unusable)
+ * Battery meter
+ * WI-FI
+ * Camera not showing in Launcher
+ * Flashlight
+ 
+### What is not tested:
+
+ * SIM1/2 RIL [Data Connection and Calls] (Not tested)
+ * Camera (Not tested)
+ * HWComposer (Not tested)
 
 ### Thanks to:
 
