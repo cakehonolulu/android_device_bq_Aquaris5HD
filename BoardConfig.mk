@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
--include vendor/kingzone/k1_turbo/BoardConfigVendor.mk
+-include vendor/bq/Aquaris5HD/BoardConfigVendor.mk
 
 # Platform
 TARGET_BOARD_PLATFORM := mt6589
