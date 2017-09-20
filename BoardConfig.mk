@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+-include vendor/kingzone/k1_turbo/BoardConfigVendor.mk
+
 # Platform
 TARGET_BOARD_PLATFORM := mt6589
 TARGET_ARCH := arm
@@ -76,10 +78,6 @@ TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_RECOVERY_FSTAB := device/bq/Aquaris5HD/rootdir/twrp.fstab
 TARGET_PREBUILT_RECOVERY_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
 BOARD_HAS_NO_SELECT_BUTTON := true
-
-# MKIMAGE
-TARGET_MKIMAGE := device/bq/Aquaris5HD/mkimage
-TARGET_USE_BUILT_BOOTIMAGE := true
 
 # Wi-Fi
 WPA_SUPPLICANT_VERSION := VER_0_8_X
