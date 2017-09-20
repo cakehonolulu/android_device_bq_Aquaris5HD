@@ -89,6 +89,10 @@ WIFI_DRIVER_FW_PATH_AP := "AP"
 WIFI_DRIVER_FW_PATH_STA := "STA"
 WIFI_DRIVER_FW_PATH_P2P := "STA+P2P"
 
+# Build Boot Image
+TARGET_MKIMAGE := device/bq/Aquaris5HD/mkimage
+TARGET_USE_BUILT_BOOTIMAGE := true
+
 # Telephony
 BOARD_RIL_CLASS := ../../../device/bq/Aquaris5HD/ril/
 
