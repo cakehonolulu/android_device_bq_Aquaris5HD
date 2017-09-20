@@ -570,12 +570,6 @@ service akmd8963 /system/bin/akmd8963
     user system
     group system
 
-service AcdApiDaemon /system/bin/AcdApiDaemon
-    disabled
-    oneshot
-    user system
-    group system
-
 service bmm050d /system/bin/bmm050d
     disabled
     user system
