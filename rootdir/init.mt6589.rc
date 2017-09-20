@@ -58,15 +58,6 @@ on fs
     chmod 0771 /protect_f
     chmod 0771 /protect_s
 
-    # SGX
-#    insmod /system/lib/modules/pvrsrvkm.ko
-#    insmod /system/lib/modules/mtklfb.ko
-
-    # device info /proc interface
-#    insmod /system/lib/modules/devinfo.ko
-    exec /system/xbin/mknod /dev/devmap c 196 0
-    chmod 0444 /dev/devmap
-    chown root media /dev/devmap
     start pvrsrvctl
 
     mkdir /dev/radio 0770 radio radio
@@ -86,19 +77,28 @@ on post-fs-data
     chown system system /cache/dalvik-cache
     chmod 0771 /cache/dalvik-cache
 
-    mkdir /data/nvram 0770 root nvram
+    # ------------------------
+    # Add by MTK @cakehonolulu
+    # ------------------------
 
+    # dhcp server
+    mkdir /data/misc/dhcp 0770 dhcp wifi
+    chown dhcp wifi /data/misc/dhcp
+    chown dhcp dhcp /data/misc/dhcp/dnsmasq.leases
+    chown dhcp dhcp /data/misc/dhcp/dnsmasq.p2p0.leases
+
+    # dhcpv6 server 
+    mkdir /data/misc/wide-dhcpv6 0770 dhcp wifi
+    chown dhcp wifi /data/misc/wide-dhcpv6
+
+    # NVRAM Related
+    mkdir /data/nvram 0770 root nvram
+    
     # radvd
     mkdir /data/misc/radvd 0770 system system
     chmod 444 /etc/radvd/radvd.conf
 
-    # Permissions for System Server and daemons.
-    chown root   radio  /sys/class/leds/lcd-backlight/brightness
-    chown root   radio  /sys/class/leds/lcd-backlight/duty
-    chown root   radio  /sys/class/leds/lcd-backlight/div
-
     # Touch Panel
-    chmod 0664 /dev/touch
     chown root diag /sys/module/tpd_setting/parameters/tpd_calmat
     chown root diag /sys/module/tpd_setting/parameters/tpd_em_debounce_time
     chown root diag /sys/module/tpd_setting/parameters/tpd_mode
@@ -128,10 +128,7 @@ on post-fs-data
     mkdir /data/misc/rtc 0770 system system
 
     # M4U
-    #insmod /system/lib/modules/m4u.ko
-    #mknod /dev/M4U_device c 188 0
     chmod 0444 /dev/M4U_device
-    #chown system media /dev/M4U_device
 
     # Sensor
     chmod 0660 /dev/hwmsensor
@@ -144,21 +141,17 @@ on post-fs-data
     chmod 0660 /sys/devices/platform/msensor/driver/cpsreptxy
     chmod 0660 /sys/devices/platform/msensor/driver/cpsreptz
 
-    # GesturePorting Jiangde++, for gsensor no early suspend
-    # chmod 0777  /sys/devices/platform/gsensor/driver/noearly
-    chown system /sys/devices/platform/gsensor/driver/noearly
-
     chown system system /dev/hwmsensor
     chown system system /dev/msensor
     chown system system /dev/gsensor
-    chown system system /dev/als_ps
+    chown radio system /dev/als_ps
     chown system system /dev/gyroscope
 
     #Accdet
     chown root radio /sys/devices/platform/Accdet_Driver/driver/accdet_call_state
+
     #VideoCodec
-    insmod /system/lib/modules/vcodec_kernel_driver.ko
-    exec /system/xbin/mknod /dev/Vcodec c 160 0
+    mknod /dev/Vcodec c 160 0
     chmod 0660 /dev/Vcodec
     chown system media /dev/Vcodec
 
@@ -168,6 +161,13 @@ on post-fs-data
     mkdir /data/amit/ 0770 system system
     mkdir /data/misc/sensors 0664 system system
     mkdir /data/misc/akmd 0664 system system
+
+    mkdir /data/acdapi/ 0770 system system
+    chmod 0666 /data/misc/acdapi/calib.dat
+    chmod 0666 /data/misc/acdapi/param.dat
+    chmod 0666 /data/misc/acdapi/sensors.dat
+
+
     chown system /sys/class/input/input5/enable
     chown system /sys/class/input/input5/delay
     chown system /sys/class/input/input5/wake
@@ -223,51 +223,47 @@ on post-fs-data
     mkdir /data/misc/ppp 0770 bluetooth net_bt
 
     # Android SEC related device nodes
-#    insmod /system/lib/modules/sec.ko
-    exec /system/xbin/mknod /dev/sec c 182 0
+    mknod /dev/sec c 182 0
     chmod 0660 /dev/sec
     chown root system /dev/sec
 
     # FM Radio device node
-    exec /system/xbin/mknod /dev/fm     c 193 0
+    mknod /dev/fm     c 193 0;
     chmod 0660 /dev/fm
     chown system media /dev/fm
 
-    # device apc settings
-#    insmod /system/lib/modules/devapc.ko
+    # device info /proc interface
+    mknod /dev/devmap c 196 0;
+    chmod 0440 /dev/devmap
+    chown root system /dev/devmap
 
-    #/dev/ttyMT2 for 662x_launcher
+    #/dev/ttyMTX for 662x_launcher
+    chmod 0660 /dev/ttyMT1
+    chown system system /dev/ttyMT1
     chmod 0660 /dev/ttyMT2
     chown system system /dev/ttyMT2
 
-    chmod 0660 /dev/ttyMT1
-    chown system system /dev/ttyMT1
-
-    # STP, WMT, GPS, FM and BT Driver
-    #insmod /system/lib/modules/mtk_hif_sdio.ko
-    #insmod /system/lib/modules/mtk_stp_wmt.ko
-    #insmod /system/lib/modules/mtk_stp_uart.ko
-    #insmod /system/lib/modules/mtk_stp_gps.ko
-    #insmod /system/lib/modules/mtk_stp_bt.ko
-    #insmod /system/lib/modules/mtk_fm_drv.ko
-    #insmod /system/lib/modules/mtk_fm_priv.ko
-    #insmod /system/lib/modules/mtk_wmt_wifi.ko
-
-    # Create char device file for WMT, GPS, BT, FM, WIFI
-    exec /system/xbin/mknod /dev/stpwmt c 190 0
-    exec /system/xbin/mknod /dev/stpgps c 191 0
-    exec /system/xbin/mknod /dev/stpbt  c 192 0
-    exec /system/xbin/mknod /dev/fm     c 193 0
-    chmod 0660 /dev/stpwmt
-    chown system system /dev/stpwmt
-
-    exec /system/xbin/mknod /dev/wmtWifi c 153 0
-    chmod 0666 /dev/wmtWifi
-    chown system system /dev/wmtWifi
-
-    # BT
+    # BT relayer mode used VCOM
+    chown bluetooth radio /dev/ttyGS2
+    chmod 0660 /dev/ttyGS2
     chmod 0660 /dev/stpbt
     chown bluetooth radio /dev/stpbt
+    mkdir /data/@btmtk 0770 bluetooth net_bt
+    chown bluetooth bluetooth /dev/hid-keyboard
+    chmod 0660 /dev/hid-keyboard
+    chown bluetooth bluetooth /dev/btn
+    chmod 0660 /dev/btn
+
+    # Create char device file for WMT, GPS, BT, FM, WIFI
+    mknod /dev/stpwmt c 190 0
+    mknod /dev/stpgps c 191 0
+    mknod /dev/stpbt  c 192 0
+    mknod /dev/fm     c 193 0
+    chmod 0660 /dev/stpwmt
+    chown system system /dev/stpwmt
+    mknod /dev/wmtWifi c 153 0
+    chmod 0666 /dev/wmtWifi
+    chown system system /dev/wmtWifi
 
     # FM Radio device, FIXME: this is not a proper way to set permissions
     chmod 0666 /dev/fm
@@ -282,7 +278,7 @@ on post-fs-data
     chown gps gps /sys/class/gpsdrv/gps/state
     chown gps gps /sys/class/gpsdrv/gps/pwrsave
     chown gps gps /sys/class/gpsdrv/gps/status
-
+    
     # WiFi
     mkdir /data/misc/wifi 0770 wifi wifi
     mkdir /data/misc/wifi/sockets 0770 wifi wifi
@@ -291,14 +287,12 @@ on post-fs-data
     chown dhcp dhcp /data/misc/dhcp
     chown wifi wifi /data/misc/wifi
 
-    # bluetooth
-    mkdir /data/@btmtk 0770 bluetooth net_bt
-    chown bluetooth bluetooth /dev/hid-keyboard
-    chmod 0660 /dev/hid-keyboard
-    chown bluetooth bluetooth /dev/btn
-    chmod 0660 /dev/btn
     #Use uinput's default permission
     chown system net_bt_admin /dev/uinput
+
+    # UIBC
+    chown system media /dev/uibc
+    chmod 0660 /dev/uibc
 
     #TV-out
     chmod 0664 /dev/TV-out
@@ -307,6 +301,7 @@ on post-fs-data
     chmod 0664 /dev/ext_display
 
     #HDMI
+    chown media system /dev/hdmitx
     chmod 0664 /dev/hdmitx
 
     # JPEG
@@ -317,13 +312,34 @@ on post-fs-data
 
     # DISP
     chmod 0444 /dev/mtk_disp
+    chown system system /dev/mtk_disp
 
     #Camera
+    chmod 0660 /dev/camera-sysram
+    chmod 0660 /dev/camera-isp
+    chmod 0660 /dev/camera-pipemgr
+    chmod 0660 /dev/kd_camera_hw
+    chmod 0660 /dev/kd_camera_flashlight
+    chmod 0660 /dev/kd_camera_hw_bus2
+    chmod 0660 /dev/FM50AF
+    chmod 0660 /dev/CAM_CAL_DRV
     chmod 0660 /dev/OV8825AF
-    chown system camera /dev/OV8825AF
-    
     chmod 0660 /dev/S5K3H2YXAF
+
+    chown system camera /dev/camera-sysram
+    chown system camera /dev/camera-isp
+    chown system camera /dev/camera-pipemgr
+    chown system camera /dev/kd_camera_hw
+    chown system camera /dev/kd_camera_flashlight
+    chown system camera /dev/kd_camera_hw_bus2
+    chown system camera /dev/FM50AF
+    chown system camera /dev/CAM_CAL_DRV
+    chown system camera /dev/OV8825AF
     chown system camera /dev/S5K3H2YXAF
+
+    #/dev/RT_Monitor
+    chmod 0600 /dev/RT_Monitor
+    chown system system /dev/RT_Monitor
 
     #MATV
     chmod 0660 /dev/MATV
@@ -341,9 +357,7 @@ on post-fs-data
     chmod 0660 /dev/mtkg2d
     chown system media /dev/mtkg2d
 
-    #for eng mode
     chmod 0664 /dev/misc-sd
-
     chmod 0666 /sys/bus/platform/drivers/mem_bw_ctrl/concurrency_scenario
     chown system media /sys/bus/platform/drivers/mem_bw_ctrl/concurrency_scenario
 
@@ -351,16 +365,12 @@ on post-fs-data
     chmod 0666 /dev/MTK_SMI
     chown system media /dev/MTK_SMI
 
-    # mtk_sched
+    #mtk_sched
     chmod 0660 /dev/mtk_sched
     chown system media /dev/mtk_sched
 
-    # dhcp
-    chown dhcp wifi /data/misc/dhcp
-    chown dhcp dhcp /data/misc/dhcp/dnsmasq.leases
-    chown dhcp dhcp /data/misc/dhcp/dnsmasq.p2p0.leases
-
-    chown root radio /proc/cmdline
+    #sbchk
+    mkdir /data/sec 0750 nvram system
 
     ## Thermal
     #change permissions on thermal devices
@@ -383,6 +393,10 @@ on post-fs-data
     chown system system /proc/wmt_tm/tx_thro
     chown system system /proc/wmt_tm/wmt_val
     chown system system /proc/wmt_tm/wfd_stat
+
+    # -------------------------
+    # End of adding MTK drivers
+    # -------------------------
 
 # SGX init
 service pvrsrvctl /system/vendor/bin/pvrsrvctl --no-module --start
@@ -525,51 +539,63 @@ service dhcpcd_bt-pan /system/bin/logwrapper /system/bin/dhcpcd -A -BK -dd
     disabled
     oneshot
 
-# sensor services
+#
+#sensor service (begin)
+#
+
 service msensord /system/bin/msensord
     class main
     oneshot
 
-service ami304d /system/bin/logwrapper /system/bin/ami304d
+service ami304d /system/bin/ami304d
     user system
     group system
     disabled
-    oneshot
+    class main
 
 service memsicd /system/bin/memsicd
     disabled
-    oneshot
     user system
     group system
+    class main
 
 service akmd8975 /system/bin/akmd8975
     disabled
     user system
     group system
+    class main
 
 service akmd8963 /system/bin/akmd8963
     disabled
     user system
     group system
 
-#service bmm050d /system/bin/bmm050d
-    #disabled
-    #user system
-    #group system
-
-service bmm056d /system/bin/bmm056d
-    class main
+service AcdApiDaemon /system/bin/AcdApiDaemon
+    disabled
     oneshot
+    user system
+    group system
+
+service bmm050d /system/bin/bmm050d
+    disabled
+    user system
+    group system
+    class main
 
 service orientationd /system/bin/orientationd
     disabled
     user system
     group system input
+    class main
 
 service geomagneticd /system/bin/geomagneticd
     disabled
     user system
     group system input
+    class main
+#
+#sensor service (end)
+#
 
 service drvbd /system/bin/drvbd
     class main
