@@ -51,8 +51,6 @@ TARGET_BOOTLOADER_BOARD_NAME := mt6589
 
 # Build Custom Boot Image using MTK headers
 BOARD_CUSTOM_BOOTIMG_MK := device/bq/Aquaris5HD/boot.mk
-BOARD_MKBOOTIMG_ARGS := --board 1336460062
-BOARD_CUSTOM_BOOTIMG := true
 
 # EGL settings
 BOARD_EGL_CFG := device/bq/Aquaris5HD/configs/egl.cfg
