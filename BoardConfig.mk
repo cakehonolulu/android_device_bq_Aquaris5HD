@@ -1,128 +1,98 @@
-# Copyright (C) 2017 The CyanogenMod Project
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+-include bootable/recovery/Custom.mk
 
+DEVICE_FOLDER := device/bq/Aquaris5HD
+
+USE_CAMERA_STUB := true
+
+# inherit from the proprietary version
 -include vendor/bq/Aquaris5HD/BoardConfigVendor.mk
 
-# Platform
-TARGET_BOARD_PLATFORM := mt6589
 TARGET_ARCH := arm
+TARGET_BOARD_PLATFORM := MT6589
 TARGET_CPU_ABI := armeabi-v7a
 TARGET_CPU_ABI2 := armeabi
-TARGET_CPU_SMP := true
+ARCH_ARM_HAVE_NEON := true
 TARGET_ARCH_VARIANT := armv7-a-neon
 TARGET_CPU_VARIANT := cortex-a7
+ARCH_ARM_HAVE_VFP := true
+TARGET_CPU_SMP := true
+ARCH_ARM_HAVE_TLS_REGISTER := true
 
-# Blob Hacks
-COMMON_GLOBAL_CFLAGS += -DDISABLE_HW_ID_MATCH_CHECK
+
+TARGET_GLOBAL_CFLAGS   += -mfpu=neon -mfloat-abi=softfp
+TARGET_GLOBAL_CPPFLAGS += -mfpu=neon -mfloat-abi=softfp
+
+# blob hacks
+COMMON_GLOBAL_CFLAGS += -DMR1_AUDIO_BLOB -DDISABLE_HW_ID_MATCH_CHECK -DNEEDS_VECTORIMPL_SYMBOLS -DMTK_SERIALNO_FIX
+BOARD_HAVE_PRE_KITKAT_AUDIO_BLOB := true
+BOARD_HAVE_PRE_KITKAT_AUDIO_POLICY_BLOB := true
 TARGET_RUNNING_WITHOUT_SYNC_FRAMEWORK := true
-TARGET_ENABLE_NON_PIE_SUPPORT := true
 
 # HW Composer
 BOARD_NEEDS_OLD_HWC_API := true
 COMMON_GLOBAL_CFLAGS += -DMTK_G_MT6589
 COMMON_GLOBAL_CPPFLAGS += -DMTK_G_MT6589
-BOARD_HAS_MTK_HARDWARE := true
-COMMON_GLOBAL_CFLAGS += -DMTK_HARDWARE
-COMMON_GLOBAL_CPPFLAGS += -DMTK_HARDWARE
 
-# Bluetooth
-BOARD_HAVE_BLUETOOTH := true
-BOARD_HAVE_BLUETOOTH_MTK := true
-BOARD_BLUETOOTH_DOES_NOT_USE_RFKILL := true
-BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/bq/Aquaris5HD/bluetooth
-
-# Power
+# power
 TARGET_POWERHAL_VARIANT := cm
 
-# Bootloader
+# boot
 TARGET_NO_BOOTLOADER := true
-TARGET_BOOTLOADER_BOARD_NAME := mt6589
-
-# Build Custom Boot Image using MTK headers
-BOARD_CUSTOM_BOOTIMG_MK := device/bq/Aquaris5HD/boot.mk
 
 # EGL settings
-BOARD_EGL_CFG := device/bq/Aquaris5HD/configs/egl.cfg
+BOARD_EGL_CFG := device/bq/Aquaris5HD/egl.cfg
 USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 
-# Kernel
-TARGET_PREBUILT_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
+# kernel
+TARGET_PREBUILT_KERNEL := $(DEVICE_FOLDER)/prebuilt/zImage
 BOARD_KERNEL_CMDLINE :=
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_KERNEL_PAGESIZE := 2048
 
-# Device Partitions
-BOARD_BOOTIMAGE_PARTITION_SIZE := 16777216
-BOARD_SYSTEMIMAGE_PARTITION_SIZE := 576716800
-BOARD_USERDATAIMAGE_PARTITION_SIZE:= 209715200
-BOARD_RECOVERYIMAGE_PARTITION_SIZE := 16777216
-BOARD_KERNEL_PAGESIZE := 2048
+TARGET_RECOVERY_INITRC := device/bq/Aquaris5HD/recovery/init.rc
+
+# fix this up by examining /proc/mtd on a running device
+RECOVERY_VARIANT := twrp
+BOARD_BOOTIMAGE_PARTITION_SIZE := 0x01600000
+BOARD_RECOVERYIMAGE_PARTITION_SIZE := 0x01600000
+BOARD_SYSTEMIMAGE_PARTITION_SIZE := 0x38000000
+BOARD_USERDATAIMAGE_PARTITION_SIZE := 0x9B700000
 BOARD_FLASH_BLOCK_SIZE := 512
 TARGET_USERIMAGES_USE_EXT4 := true
+TW_EXCLUDE_MTP := false
+TW_NO_SCREEN_TIMEOUT := true
 
-# Recovery
-TARGET_RECOVERY_FSTAB := device/bq/Aquaris5HD/rootdir/twrp.fstab
-TARGET_PREBUILT_RECOVERY_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
 BOARD_HAS_NO_SELECT_BUTTON := true
-
-# Wi-Fi
-WPA_SUPPLICANT_VERSION := VER_0_8_X
-BOARD_WPA_SUPPLICANT_DRIVER := NL80211
-BOARD_HOSTAPD_DRIVER := NL80211
-BOARD_WLAN_DEVICE := mediatek
-BOARD_WPA_SUPPLICANT_PRIVATE_LIB := lib_driver_cmd_mt66xx
-BOARD_HOSTAPD_PRIVATE_LIB := lib_driver_cmd_mt66xx
-WIFI_DRIVER_FW_PATH_PARAM:= "/dev/wmtWifi"
-WIFI_DRIVER_FW_PATH_STA:= STA
-WIFI_DRIVER_FW_PATH_AP:= AP
-WIFI_DRIVER_FW_PATH_P2P:= P2P
-
-# Build Boot Image
-TARGET_MKIMAGE := device/bq/Aquaris5HD/mkimage
-TARGET_USE_BUILT_BOOTIMAGE := true
-
-# Telephony
-BOARD_RIL_CLASS := ../../../device/bq/Aquaris5HD/ril/
-
-# Permissions
-TARGET_SPECIFIC_HEADER_PATH := device/bq/Aquaris5HD/include
-
-# Lun File Path
-TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/virtual/android_usb/android0/f_mass_storage/lun%d/file"
-
-#SEPolicy
-BOARD_SEPOLICY_DIRS += \
-    device/bq/Aquaris5HD/sepolicy
-
-BOARD_SEPOLICY_UNION += \
-    device.te \
-    pvrsrvctl.te \
-    netd.te \
-	file_contexts
-
-# TWRP
 BOARD_HAS_LARGE_FILESYSTEM := true
+TARGET_RECOVERY_FORCE_PIXEL_FORMAT := BGRA_8888
+DEVICE_RESOLUTION := 720x1280
 
-TW_NO_USB_STORAGE := true
-RECOVERY_GRAPHICS_USE_LINELENGTH := true
-TW_NO_REBOOT_BOOTLOADER := true
-TW_BRIGHTNESS_PATH := /sys/devices/platform/leds-mt65xx/leds/lcd-backlight/brightness
-TW_MAX_BRIGHTNESS := 255
-TW_CUSTOM_BATTERY_PATH := /sys/devices/platform/mt6320-battery/power_supply/battery
-
+# mkimage to append headers
+TARGET_MKIMAGE := $(DEVICE_FOLDER)/mkimage
+TARGET_USE_BUILT_BOOTIMAGE := true
+TWRP_INCLUDE_LOGCAT := true
+TW_MTP_DEVICE := "bq Aquaris 5 HD"
 TW_INTERNAL_STORAGE_PATH := "/storage/emulated/0"
-TW_INTERNAL_STORAGE_MOUNT_POINT := "sdcard0"
+TW_INTERNAL_STORAGE_MOUNT_POINT := "storage/emulated/0"
 TW_EXTERNAL_STORAGE_PATH := "/storage/sdcard1"
-TW_EXTERNAL_STORAGE_MOUNT_POINT := "sdcard1"
+TW_EXTERNAL_STORAGE_MOUNT_POINT := "storage/sdcard1"
+TW_INCLUDE_FB2PNG := true
+TW_HAS_DOWNLOAD_MODE := true
+TW_INCLUDE_CRYPTO := true
+TARGET_USERIMAGES_USE_F2FS := true
+
+TW_USE_BRAND_DEVICE_HARDWARE_ID_FOR_DEVICE_ID := true
+TW_BRIGHTNESS_PATH := /sys/devices/platform/leds-mt65xx/leds/lcd-backlight/brightness
+TARGET_USE_CUSTOM_LUN_FILE_PATH := /sys/devices/platform/mt_usb/musb-hdrc.0/gadget/lun%d/file
+TW_MAX_BRIGHTNESS := 255
+TW_CUSTOM_BATTERY_PATH := /sys/devices/platform/battery/power_supply/battery
+TW_BACKUPS_FOLDER := /storage/emulated/0/TWRP/BACKUPS/Aquaris5HD
+
+BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_FOLDER)/boot.mk
+
+TW_THEME := portrait_hdpi
+
+TWHAVE_SELINUX := true
+
+TW_INCLUDE_NTFS_3G := true

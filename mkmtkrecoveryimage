@@ -1,0 +1,1 @@
+~/ROMNAME/device/bq/Aquaris5HD/mkbootimg --kernel kernel  --ramdisk ramdisk-recovery.img --base 0x10000000 --output recovery.img

@@ -1,0 +1,10 @@
+/cache				ext4		/dev/block/mmcblk0p6
+/system				ext4		/dev/block/mmcblk0p5
+/data				ext4		/dev/block/mmcblk0p7 length=-16384
+/boot				emmc		/dev/bootimg
+/recovery			emmc		/dev/recovery
+/external_sd		vfat		/dev/block/mmcblk1p1 /dev/block/mmcblk1		flags=display="External SD";storage;wipeingui;removable
+/logo				emmc		/dev/logo									flags=display="Logo";backup=1
+/nvram				emmc		/dev/nvram									flags=display="NVRAM";backup=1
+/secro				emmc		/dev/sec_ro									flags=display="Baseband";backup=1
+/uboot				emmc		/dev/uboot									flags=display="Bootloader";backup=1
