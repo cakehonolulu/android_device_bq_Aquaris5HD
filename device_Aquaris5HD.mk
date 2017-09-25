@@ -90,7 +90,7 @@ PRODUCT_PACKAGES += \
 
 # Wi-Fi
 PRODUCT_PACKAGES += \
-	lib_driver_cmd_mtk
+	lib_driver_cmd_mt66xx
 
 # Audio
 PRODUCT_PACKAGES += \
