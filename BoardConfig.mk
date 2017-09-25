@@ -50,7 +50,7 @@ TARGET_NO_BOOTLOADER := true
 TARGET_BOOTLOADER_BOARD_NAME := mt6589
 
 # Build Custom Boot Image using MTK headers
-BOARD_CUSTOM_BOOTIMG_MK := device/bq/Aquaris5HD/boot.mk
+BOARD_CUSTOM_BOOTIMG_MK := device/bq/Aquaris5HD/tools/boot.mk
 
 # EGL settings
 BOARD_EGL_CFG := device/bq/Aquaris5HD/configs/egl.cfg
@@ -58,7 +58,7 @@ USE_OPENGL_RENDERER := true
 BOARD_EGL_WORKAROUND_BUG_10194508 := true
 
 # Kernel
-TARGET_PREBUILT_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
+TARGET_PREBUILT_KERNEL := device/bq/Aquaris5HD/kernel
 BOARD_KERNEL_CMDLINE :=
 BOARD_KERNEL_BASE := 0x10000000
 BOARD_KERNEL_PAGESIZE := 2048
@@ -74,7 +74,7 @@ TARGET_USERIMAGES_USE_EXT4 := true
 
 # Recovery
 TARGET_RECOVERY_FSTAB := device/bq/Aquaris5HD/rootdir/twrp.fstab
-TARGET_PREBUILT_RECOVERY_KERNEL := device/bq/Aquaris5HD/prebuilt/kernel
+TARGET_PREBUILT_RECOVERY_KERNEL := device/bq/Aquaris5HD/kernel
 BOARD_HAS_NO_SELECT_BUTTON := true
 
 # Wi-Fi
@@ -88,10 +88,6 @@ WIFI_DRIVER_FW_PATH_PARAM:= "/dev/wmtWifi"
 WIFI_DRIVER_FW_PATH_STA:= STA
 WIFI_DRIVER_FW_PATH_AP:= AP
 WIFI_DRIVER_FW_PATH_P2P:= P2P
-
-# Build Boot Image
-TARGET_MKIMAGE := device/bq/Aquaris5HD/mkimage
-TARGET_USE_BUILT_BOOTIMAGE := true
 
 # Telephony
 BOARD_RIL_CLASS := ../../../device/bq/Aquaris5HD/ril/
