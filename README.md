@@ -26,11 +26,11 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
  * No Hard-Reboots
  * Graphics
  * Storage
+ * Battery meter
+ * WI-FI
 
 ### What's not working:
 
- * Battery meter
- * WI-FI
  * Camera not showing in Launcher
  * Flashlight
  
