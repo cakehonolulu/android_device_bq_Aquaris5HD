@@ -51,6 +51,7 @@ TARGET_BOOTLOADER_BOARD_NAME := mt6589
 
 # Build Custom Boot Image using MTK headers
 BOARD_CUSTOM_BOOTIMG_MK := device/bq/Aquaris5HD/tools/boot.mk
+BOARD_MKBOOTIMG_ARGS := --board 1419997733
 
 # EGL settings
 BOARD_EGL_CFG := device/bq/Aquaris5HD/configs/egl.cfg
@@ -90,7 +91,7 @@ WIFI_DRIVER_FW_PATH_AP:= AP
 WIFI_DRIVER_FW_PATH_P2P:= P2P
 
 # Telephony
-BOARD_RIL_CLASS := ../../../device/bq/Aquaris5HD/ril/
+BOARD_RIL_CLASS := ../../../device/bq/Aquaris5HD/MediaTek/ril/
 
 # Permissions
 TARGET_SPECIFIC_HEADER_PATH := device/bq/Aquaris5HD/include
