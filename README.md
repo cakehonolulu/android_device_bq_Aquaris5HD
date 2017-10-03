@@ -28,16 +28,17 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
  * Storage
  * Battery meter
  * WI-FI
+ * Audio
 
 ### What's not working:
 
  * Camera
  * Flashlight
+ * HWComposer
  
 ### What is not tested:
 
  * SIM1/2 RIL [Data Connection and Calls] (Not tested)
- * HWComposer (Not tested)
 
 ### Thanks to:
 
