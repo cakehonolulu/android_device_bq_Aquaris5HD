@@ -11,12 +11,6 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
 
      * . build/envsetup.sh
 
-     * cd device/bq/Aquaris5HD/
-
-     * . setup-makefiles.sh
-
-     * croot
-
      * brunch Aquaris5HD
 
 ### What's working:
