@@ -4,4 +4,4 @@
 # GPU device
 /dev/pvr_sync			u:object_r:gpu_device:s0
 /dev/mtkfb_vsync		u:object_r:gpu_device:s0
-/system/bin/pvrsrvctl   u:object_r:pvrsrvctl_exec:s0
+/system/vendor/bin/pvrsrvctl   u:object_r:pvrsrvctl_exec:s0
