@@ -44,3 +44,4 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
  * kashifmin
  * andreya108
  * andr7e
+ * blackrebel75
