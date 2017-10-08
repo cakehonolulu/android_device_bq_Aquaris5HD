@@ -3,6 +3,8 @@ import init.modem.rc
 import init.protect.rc
 
 on early-init
+    # Use Permissive Linux for now
+    setenforce 0
     mount debugfs /sys/kernel/debug /sys/kernel/debug
 
 on boot
