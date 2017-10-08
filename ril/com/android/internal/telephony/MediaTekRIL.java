@@ -924,7 +924,7 @@ public class MediaTekRIL extends RIL implements CommandsInterface {
         if (RILJ_LOGD) riljLog(rr.serialString() + "> " + requestToString(rr.mRequest));
 
         rr.mParcel.writeInt(1);
-        rr.mParcel.writeInt(on ? 3 : -1); // SIM1 | SIM2 ?
+        rr.mParcel.writeInt(on ? 3 : 0); // SIM1 | SIM2 ?
         send(rr);
     }
 
