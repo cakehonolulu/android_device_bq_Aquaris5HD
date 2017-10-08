@@ -9,6 +9,8 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
 
      * git clone https://github.com/cakehonolulu/android_device_bq_Aquaris5HD device/bq/Aquaris5HD
 
+     * You should also follow the guide of https://github.com/cakehonolulu/android_vendor_bq_Aquaris5HD in order to get the vendor folder on your source
+
      * . build/envsetup.sh
 
      * brunch Aquaris5HD
