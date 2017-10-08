@@ -1,7 +1,7 @@
-# Wi-Fi device
-/dev/wmtWifi			u:object_r:wmtWifi_device:s0
+# Wi-Fi related SELinux permissions
+/dev/wmtWifi					u:object_r:wmtWifi_device:s0
 
-# GPU device
-/dev/pvr_sync			u:object_r:gpu_device:s0
-/dev/mtkfb_vsync		u:object_r:gpu_device:s0
-/system/vendor/bin/pvrsrvctl   u:object_r:pvrsrvctl_exec:s0
+# GPU device related SELinux permissions
+/dev/pvr_sync					u:object_r:gpu_device:s0
+/dev/mtkfb_vsync				u:object_r:gpu_device:s0
+/system/vendor/bin/pvrsrvctl	u:object_r:pvrsrvctl_exec:s0
