@@ -3,8 +3,6 @@ import init.modem.rc
 import init.protect.rc
 
 on early-init
-	# Use Permissive Linux for now
-    setenforce 0
     mount debugfs /sys/kernel/debug /sys/kernel/debug
 
 on boot
@@ -51,13 +49,6 @@ on init
 
 on fs
     mount_all /fstab.mt6589
-    mkdir /protect_f
-    mkdir /protect_s
-
-    chown system system /protect_f
-    chown system system /protect_s
-    chmod 0771 /protect_f
-    chmod 0771 /protect_s
 
     start pvrsrvctl
 
