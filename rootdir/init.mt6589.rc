@@ -555,15 +555,14 @@ service ami304d /system/bin/ami304d
 
 service memsicd /system/bin/memsicd
     disabled
+    oneshot
     user system
     group system
-    class main
 
 service akmd8975 /system/bin/akmd8975
     disabled
     user system
     group system
-    class main
 
 service akmd8963 /system/bin/akmd8963
     disabled
@@ -580,13 +579,11 @@ service orientationd /system/bin/orientationd
     disabled
     user system
     group system input
-    class main
 
 service geomagneticd /system/bin/geomagneticd
     disabled
     user system
     group system input
-    class main
 #
 #sensor service (end)
 #
