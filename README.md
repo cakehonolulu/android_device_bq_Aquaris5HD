@@ -27,11 +27,12 @@ bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
  * Audio
  * Camera
  * Flashlight
+ * Brightness
 
 ### What's not working:
 
  * HWComposer
- * Brightness/Autobrightness
+ * Autobrightness
  * Microphone
  
 ### What is not tested:
