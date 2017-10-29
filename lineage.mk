@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The CyanogenMod Project
+# Copyright (C) 2017 The LineageOS Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,22 +20,9 @@ $(call inherit-product, vendor/cm/config/common_full_phone.mk)
 TARGET_SCREEN_HEIGHT := 1280
 TARGET_SCREEN_WIDTH := 720
 
-PRODUCT_NAME := cm_Aquaris5HD
+PRODUCT_NAME := lineage_Aquaris5HD
 PRODUCT_DEVICE := Aquaris5HD
 PRODUCT_MODEL := bq Aquaris 5 HD
 PRODUCT_RELEASE_NAME := Aquaris5HD
 PRODUCT_BRAND := bq
 PRODUCT_MANUFACTURER := bq
-
-
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
-	ro.hardware=mt6589 \
-	ro.allow.mock.location=0 \
-	ro.debuggable=1 \
-	persist.service.adb.enable=1 \
-	ro.secure=0 \
-	ro.adb.secure=0
-
-ADDITIONAL_DEFAULT_PROPERTIES := \
-	ro.secure=0 \
-	ro.adb.secure=0
