@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The OmniROM Project <http://www.omnirom.org>
+ * Copyright (C) 2017 The LineageOS Project <http://www.omnirom.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
