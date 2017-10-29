@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # IMPORTANT: Do not create world writable files or directories.
 # This is a common source of Android security bugs.
@@ -27,7 +27,6 @@ on post-fs-data
     chown ccci ccci /dev/ccci_uem_rx
     chown ccci ccci /dev/ccci_uem_tx
 
-    
 service gsm0710muxd /system/bin/gsm0710muxd -s /dev/ttyC0 -f 512 -n 8 -m basic
     class core
     user root
@@ -127,7 +126,6 @@ service pppd /system/bin/pppd file /data/misc/ppp/ppp_options
     disabled 
     oneshot
 
-#
 #
 #  Modem related services (End)
 #
