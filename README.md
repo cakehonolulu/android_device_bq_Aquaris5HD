@@ -1,9 +1,9 @@
-bq Aquaris 5 HD - CyanogenMod 11 (Android 4.4.4)
+bq Aquaris 5 HD - LineageOS 11 (Android 4.4.4)
 ==============
 
 ### Compilation guide:
 
-     * repo init -u git://github.com/CyanogenMod/android.git -b cm-11.0
+     * repo init -u git://github.com/LineageOS/android.git -b cm-11.0
 
      * repo sync 
 
