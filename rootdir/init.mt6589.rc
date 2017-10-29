@@ -76,14 +76,9 @@ on post-fs-data
     # ------------------------
 
     # dhcp server
-    mkdir /data/misc/dhcp 0770 dhcp wifi
     chown dhcp wifi /data/misc/dhcp
     chown dhcp dhcp /data/misc/dhcp/dnsmasq.leases
     chown dhcp dhcp /data/misc/dhcp/dnsmasq.p2p0.leases
-
-    # dhcpv6 server 
-    mkdir /data/misc/wide-dhcpv6 0770 dhcp wifi
-    chown dhcp wifi /data/misc/wide-dhcpv6
 
     # NVRAM Related
     mkdir /data/nvram 0770 root nvram
@@ -235,7 +230,7 @@ on post-fs-data
     # device info /proc interface
     exec /system/xbin/mknod /dev/devmap c 196 0
     chmod 0444 /dev/devmap
-    chown root system /dev/devmap
+    chown root media /dev/devmap
 
     #/dev/ttyMTX for 662x_launcher
     chmod 0660 /dev/ttyMT1
@@ -547,11 +542,11 @@ service msensord /system/bin/msensord
     class main
     oneshot
 
-service ami304d /system/bin/ami304d
+service ami304d /system/bin/logwrapper /system/bin/ami304d
     user system
     group system
     disabled
-    class main
+    oneshot
 
 service memsicd /system/bin/memsicd
     disabled
@@ -573,7 +568,6 @@ service bmm050d /system/bin/bmm050d
     disabled
     user system
     group system
-    class main
 
 service orientationd /system/bin/orientationd
     disabled
