@@ -149,6 +149,9 @@ BOARD_RIL_CLASS := ../../../device/bq/Aquaris5HD/ril/
 
 TARGET_SPECIFIC_HEADER_PATH := device/bq/Aquaris5HD/include
 
+#Art
+MALLOC_IMPL := dlmalloc 
+
 # allow more than one lun file
 TARGET_USE_CUSTOM_LUN_FILE_PATH := "/sys/devices/virtual/android_usb/android0/f_mass_storage/lun%d/file"
 
