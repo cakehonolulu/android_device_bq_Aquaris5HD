@@ -17,8 +17,14 @@ on charger
 on boot
     chown root radio /proc/cmdline
 
+<<<<<<< HEAD
 on init  
     export LD_PRELOAD /system/lib/libxlog.so
+=======
+on init
+
+    export LD_PRELOAD /system/lib/libmtkshim.so
+>>>>>>> cc46fb9... device: shims: Add Mtk shims lib
 
     mkdir /mnt/shell 0700 shell shell
     chmod 0750 /mnt/shell

@@ -46,9 +46,19 @@ PRODUCT_COPY_FILES += \
 	$(MOD_SRC)/vcodec_kernel_driver.ko:$(MOD_TGT)/vcodec_kernel_driver.ko \
 	$(MOD_SRC)/wlan_mt6628.ko:$(MOD_TGT)/wlan_mt6628.ko
 
+<<<<<<< HEAD:device_Aquaris5HD.mk
 # Set default USB interface
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp,adb
+=======
+#SHIMS
+PRODUCT_PACKAGES += \
+   libmtkshim
+
+#USB
+PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
+     persist.sys.usb.config=mtp,adb
+>>>>>>> cc46fb9... device: shims: Add Mtk shims lib:device_me173x.mk
 
 PRODUCT_PROPERTY_OVERRIDES := \
     service.adb.root=1 \
@@ -147,9 +157,6 @@ PRODUCT_COPY_FILES += \
 # GPS
 PRODUCT_COPY_FILES += \
      $(LOCAL_PATH)/configs/agps_profiles_conf2.xml:system/etc/agps_profiles_conf2.xml
-     
-PRODUCT_PACKAGES += \
-    libxlog
 
 # Ramdisk
 PRODUCT_COPY_FILES += \
