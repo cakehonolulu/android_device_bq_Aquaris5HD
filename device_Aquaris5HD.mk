@@ -50,15 +50,10 @@ PRODUCT_COPY_FILES += \
 # Set default USB interface
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp,adb
-=======
+
 #SHIMS
 PRODUCT_PACKAGES += \
    libmtkshim
-
-#USB
-PRODUCT_DEFAULT_PROPERTY_OVERRIDES += \
-     persist.sys.usb.config=mtp,adb
->>>>>>> cc46fb9... device: shims: Add Mtk shims lib:device_me173x.mk
 
 PRODUCT_PROPERTY_OVERRIDES := \
     service.adb.root=1 \
