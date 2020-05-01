@@ -16,5 +16,5 @@
 
 for i in eng userdebug user; do
     add_lunch_combo full_Aquaris5HD-${i}
-    add_lunch_combo lineage_Aquaris5HD-${i}
+    add_lunch_combo cm_Aquaris5HD-${i}
 done
