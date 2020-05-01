@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2013 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,5 +15,6 @@
 #
 
 for i in eng userdebug user; do
-    add_lunch_combo lineage_Aquaris5HD-${i}
+    add_lunch_combo full_Aquaris5HD-${i}
+    add_lunch_combo cm_Aquaris5HD-${i}
 done

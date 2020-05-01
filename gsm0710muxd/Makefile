@@ -40,4 +40,14 @@ src/gsm0710muxd.o : src/gsm0710muxd.c
 .PHONY : clean
 clean :
 	-rm gsm0710muxd $(objects)
-	
+
+
+
+
+
+
+
+
+
+
+

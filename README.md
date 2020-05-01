@@ -1,53 +1,33 @@
-bq Aquaris 5 HD - LineageOS 11 (Android 4.4.4)
-==============
+# Huawei G700 device tree
+This is the working device tree for mt6589 based phone for build Lineage Os 12.1.
 
-### Compilation guide:
+# What works
 
-     * repo init -u git://github.com/LineageOS/android.git -b cm-11.0
+Wifi+hotspot+direct \
+GPS \
+Bluetooth \
+Audio \
+Radio FM \
+Sim 1/2 calls/data 2g/3g \
+USSD/MMI \
+Hardware Video encoding \
+Camera e Video Recorder (FHD) \
+Offline charger \
+Sensors \
+Led 
 
-     * repo sync 
+# Bugs
+Vpn don't work. \
+Video playback can freeze: this bug is related to mtk codec. Mtk encoders are also initialized during video playback and this causes crashes.
 
-     * git clone https://github.com/cakehonolulu/android_device_bq_Aquaris5HD device/bq/Aquaris5HD
+# Credits
+fire855 \
+ferhung \
+kashifmin \
+DrShadow \
+Chrmrhoffman \
+All the xda forum developers who actively contributed to the development of the LineageOs on Mediatek SoC and M.A.D team.
 
-     * You should also follow the guide of https://github.com/cakehonolulu/android_vendor_bq_Aquaris5HD in order to get the vendor folder on your source
-
-     * . build/envsetup.sh
-
-     * brunch Aquaris5HD
-
-### What's working:
-
- * Sound
- * CPU Frequency Scaling
- * No Hard-Reboots
- * Graphics
- * Storage
- * Battery meter
- * WI-FI
- * Audio
- * Camera
- * Flashlight
- * Brightness
-
-### What's not working:
-
- * HWComposer
- * Autobrightness
- * Microphone
- 
-### What is not tested:
-
- * SIM1/2 RIL [Data Connection and Calls] (Not tested)
- * GPS/A-GPS
-
-### Thanks to:
-
- * Pablito2020
- * pawitp
- * dhacker29
- * sultanxda
- * chrmhoffmann
- * kashifmin
- * andreya108
- * andr7e
- * blackrebel75
+# Links
+LineageOs 12.1 for G700 Italian forum: http://www.androidiani.com/forum/modding-huawei-ascend-g700/550786-huawei-g700-lineageos-12-1-unofficial.html \
+Updated LineageOs 12.1 repositories with latest security patches: https://github.com/cm12-amami?tab=repositories\

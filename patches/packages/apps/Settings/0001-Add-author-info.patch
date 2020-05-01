@@ -1,0 +1,51 @@
+From 1b40c808411d050e6464d8e175e6c2a32cb4b30e Mon Sep 17 00:00:00 2001
+From: blackrebel <72fabio1@virgilio.it>
+Date: Tue, 19 Jun 2018 19:22:24 +0200
+Subject: [PATCH] Add author info
+
+---
+ res/values/strings.xml                           |  4 ++++
+ res/xml/device_info_settings.xml                 |  5 +++++
+ src/com/android/settings/DeviceInfoSettings.java | 11 +++++++++++
+ 3 files changed, 20 insertions(+)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index cef6bc874a..12beb03e29 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -32,6 +32,8 @@
+     <!-- Device Info --> <skip />
+     <!-- Device Info screen. Used for a status item's value when the proper value is not known -->
+     <string name="device_info_default">Unknown</string>
++    <!-- Device Info screen. Used for a status item's value when the proper value is not known -->
++    <string name="author_info_default">cakehonolulu</string>
+     <!-- [CHAR LIMIT=NONE] Device Info screen. Countdown for user taps to enable development settings -->
+     <plurals name="show_dev_countdown">
+         <item quantity="one">You are now <xliff:g id="step_count">%1$d</xliff:g> step away from being a developer.</item>
+@@ -2152,6 +2154,8 @@
+     <string name="firmware_version">Android version</string>
+     <!-- About phone screen, status item label  [CHAR LIMIT=40] -->
+     <string name="security_patch">Android security patch level</string>
++    <!-- About phone screen, status item label  [CHAR LIMIT=60] -->
++    <string name="author_info">Device Maintainer</string>
+     <!-- About phone screen, status item label  [CHAR LIMIT=40] -->
+     <string name="model_number">Model number</string>
+     <!-- About phone screen, fcc equipment id label  [CHAR LIMIT=40] -->
+diff --git a/res/xml/device_info_settings.xml b/res/xml/device_info_settings.xml
+index a18d483625..b546691132 100644
+--- a/res/xml/device_info_settings.xml
++++ b/res/xml/device_info_settings.xml
+@@ -154,6 +154,11 @@
+                 android:title="@string/security_patch"
+                 android:summary="@string/device_info_default"/>
+ 
++	    <!-- Author Info -->
++	    <Preference android:key="author_info"
++		android:title="@string/author_info"
++		android:summary="@string/author_info_default" />
++
+         <!-- Device FCC equipment id -->
+         <Preference android:key="fcc_equipment_id"
+                 style="?android:preferenceInformationStyle"
+2.15.1
+
