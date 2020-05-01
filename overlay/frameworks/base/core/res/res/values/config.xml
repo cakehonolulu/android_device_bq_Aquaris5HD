@@ -45,39 +45,44 @@
     <bool name="config_automatic_brightness_available">true</bool>
 
     <integer-array name="config_autoBrightnessLevels">
-        <item>10</item>
         <item>16</item>
         <item>32</item>
         <item>50</item>
         <item>100</item>
         <item>140</item>
         <item>180</item>
-        <item>255</item>
-        <item>320</item>
-        <item>640</item>
-        <item>1280</item>
-        <item>2600</item>
-        <item>10240</item>
+        <item>240</item>
+        <item>300</item>
+        <item>600</item>
+        <item>1000</item>
+        <item>2000</item>
+        <item>3000</item>
+        <item>4000</item>
+        <item>8000</item>
+        <item>10000</item>
     </integer-array>
     <integer-array name="config_autoBrightnessLcdBacklightValues">
+        <item>20</item>
         <item>30</item>
         <item>30</item>
-        <item>35</item>
-        <item>35</item>
-        <item>45</item>
-        <item>65</item>
+        <item>60</item>
         <item>75</item>
-        <item>85</item>
-        <item>95</item>
-        <item>110</item>
+        <item>90</item>
         <item>130</item>
+        <item>130</item>
+        <item>130</item>
+        <item>130</item>
+        <item>165</item>
         <item>180</item>
+        <item>195</item>
+        <item>255</item>
+        <item>255</item>
         <item>255</item>
     </integer-array>
 
-    <integer name="config_screenBrightnessDim">15</integer>
+    <integer name="config_screenBrightnessDim">30</integer>
     <integer name="config_screenBrightnessDark">10</integer>
-    <integer name="config_screenBrightnessSettingDefault">70</integer>
+    <integer name="config_screenBrightnessSettingDefault">130</integer>
 
     <!-- XXXXX NOTE THE FOLLOWING RESOURCES USE THE WRONG NAMING CONVENTION.
          Please don't copy them, copy anything else. -->
@@ -154,10 +159,10 @@
     <string name="config_perf_profile_prop">sys.perf.profile</string>
     <string name="config_perf_profile_default_entry">1</string>
  
-   <!-- Make things go fast -->
+    <!-- Make things go fast -->
     <bool name="config_ui_enableFadingMarquee">false</bool>
 
- <add-resource type="string" name="com.google.android.webview"></add-resource>
+    <add-resource type="string" name="com.google.android.webview"></add-resource>
    
     <!-- Package name providing default WebView implementation. -->
     <string name="com.google.android.webview" translatable="false">com.android.webview</string>
