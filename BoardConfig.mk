@@ -78,10 +78,6 @@ BOARD_BLUETOOTH_DOES_NOT_USE_RFKILL := true
 BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/bq/Aquaris5HD/bluetooth
 
 # Healthd & Charging
-HEALTHD_ENABLE_TRICOLOR_LED := true
-RED_LED_PATH := /sys/class/leds/red/brightness
-GREEN_LED_PATH := /sys/class/leds/green/brightness
-BLUE_LED_PATH := /sys/class/leds/blue/brightness
 # Next lines, fix charging-mod in power off. It needs to modify the init.cpp, too.
 BOARD_CHARGING_MODE_BOOTING_LPM := /sys/class/BOOT/BOOT/boot/boot_mode
 BOARD_CHARGER_DISABLE_INIT_BLANK := true
