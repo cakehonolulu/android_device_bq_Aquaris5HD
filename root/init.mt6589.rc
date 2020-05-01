@@ -449,12 +449,11 @@ service battery_charger /charger
 
 
 # SGX init
-service pvrsrvctl /system/bin/pvrsrvctl --start
+service pvrsrvctl /system/vendor/bin/pvrsrvctl --start
     class main
     user root
     group root
     oneshot
-    disabled
 
 # Remove hald: updated wifi driver from kk kernel don't need of hald
 # and also fix wifi hotspot 
