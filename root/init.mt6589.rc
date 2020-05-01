@@ -345,9 +345,8 @@ on post-fs-data
     chown system camera /dev/kd_camera_hw_bus2
     chown system camera /dev/FM50AF
     chown system camera /dev/CAM_CAL_DRV
-    chown system camera /dev/OV8825AF
-    chown system camera /dev/OV8825TRULYAF
-    chown system camera /dev/OV8826AF
+    chmod 0660 /dev/S5K3H2YXAF
+    chown system camera /dev/S5K3H2YXAF
 
     #MATV
     chmod 0660 /dev/MATV
