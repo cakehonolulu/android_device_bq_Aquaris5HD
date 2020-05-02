@@ -18,7 +18,7 @@ on post-fs-data
 # Used to set USB configuration at boot and to switch the configuration
 # when changing the default configuration
 on property:persist.sys.usb.config=*
-    setprop sys.usb.config $persist.sys.usb.config
+    setprop sys.usb.config ${persist.sys.usb.config}
 
 # Used to disable USB when switching states
 on property:sys.usb.config=none
