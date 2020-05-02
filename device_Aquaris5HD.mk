@@ -44,28 +44,25 @@ PRODUCT_COPY_FILES += \
 	$(MOD_SRC)/vcodec_kernel_driver.ko:$(MOD_TGT)/vcodec_kernel_driver.ko \
 	$(MOD_SRC)/wlan_mt6628.ko:$(MOD_TGT)/wlan_mt6628.ko
 
-<<<<<<< HEAD:device_Aquaris5HD.mk
 # Set default USB interface
 PRODUCT_PROPERTY_OVERRIDES += \
     persist.sys.usb.config=mtp,adb
 
-#SHIMS
+# MTK Shims
 PRODUCT_PACKAGES += \
-   libmtkshim
+    libmtkshim
 
 PRODUCT_PROPERTY_OVERRIDES := \
     service.adb.root=1 \
-    persist.sys.root_access=1 \
-    ro.carrier=wifi-only \
-    ro.radio.noril=1
+    persist.sys.root_access=1
 
-# ART optimizations
+# ART Optimizations
 PRODUCT_PROPERTY_OVERRIDES += \
     dalvik.vm.dex2oat-filter=balanced \
     dalvik.vm.dex2oat-flags=--no-watch-dog \
     dalvik.vm.image-dex2oat-filter=speed
 
-# LOW RAM optimizations
+# Low RAM Optimizations
 ADDITIONAL_BUILD_PROPERTIES += \
  	ro.config.low_ram=true \
     persist.sys.force_highendgfx=true \
@@ -75,15 +72,6 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 
 PRODUCT_PACKAGES += \
 	gsm0710muxd
-
-# Audio
-PRODUCT_PACKAGES += \
-    audio.r_submix.default \
-    audio_policy.mt6589 \
-    audio.a2dp.default \
-    audio.primary.mt6589 \
-    libblisrc \
-    audio.r_submix.default
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf
@@ -97,11 +85,10 @@ PRODUCT_PACKAGES += \
     libmtkplayer
 
 # Media
-   
 PRODUCT_COPY_FILES += \
-        frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
-        frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
-        frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:system/etc/media_codecs_google_video.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:system/etc/media_codecs_google_video.xml \
 	$(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
 	$(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profiles.xml
 
@@ -113,7 +100,6 @@ PRODUCT_PACKAGES += \
     wpa_supplicant \
     wpa_supplicant.conf
    
-    
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/hostapd/hostapd_default.conf:system/etc/hostapd/hostapd_default.conf \
     $(LOCAL_PATH)/configs/hostapd/hostapd.accept:system/etc/hostapd/hostapd.accept \
