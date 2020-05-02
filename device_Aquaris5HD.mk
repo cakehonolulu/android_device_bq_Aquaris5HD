@@ -76,32 +76,15 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 PRODUCT_PACKAGES += \
 	gsm0710muxd
 
-# audio
+# Audio
 PRODUCT_PACKAGES += \
-    libaudio.primary.default \
-    audio_policy.mt6589 \
-    audio.primary.mt6589 \
     audio.r_submix.default \
+    audio_policy.mt6589 \
     audio.a2dp.default \
-    audio.usb.default \
-    audio_policy.default \
-    audio_policy.stub \
+    audio.primary.mt6589 \
     libblisrc \
-    libdpframework \
-    libaudiosetting \
-    libvcodecdrv \
-    libstagefright_memutil \
-    libcustom_prop \
-    libnvram \
-    libaudiocustparam \
-    libaudiocompensationfilter \
-    libcvsd_mtk \
-    libmsbc_mtk \
-    libaed \
-    libaudiocomponentengine \
-    libaudiodcrflt \
-    libbluetoothdrv \
-    libspeech_enh_lib 
+    audio.r_submix.default \
+    libdashplayer
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf
