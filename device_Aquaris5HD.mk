@@ -83,8 +83,7 @@ PRODUCT_PACKAGES += \
     audio.a2dp.default \
     audio.primary.mt6589 \
     libblisrc \
-    audio.r_submix.default \
-    libdashplayer
+    audio.r_submix.default
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf
