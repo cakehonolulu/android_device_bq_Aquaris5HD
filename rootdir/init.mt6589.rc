@@ -433,12 +433,14 @@ service pvrsrvctl /system/vendor/bin/pvrsrvctl --start
     group root
     oneshot
 
+# Remove hald: updated wifi driver from kk kernel don't need of hald
+# and also fix wifi hotspot 
 # Connectivity related services
-service hald /system/bin/hald
-    class main
-    socket hald stream 0660 root system
-    user system
-    group system radio mount wifi inet net_admin
+#service hald /system/bin/hald
+#    class main
+#    socket hald stream 0660 root system
+#    user system
+#    group system radio mount wifi inet net_admin
 
 service stp_dump /system/bin/stp_dump3
     user system
