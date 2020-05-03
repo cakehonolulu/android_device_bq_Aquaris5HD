@@ -1,0 +1,27 @@
+diff --git a/core/binary.mk b/core/binary.mk
+index 170e20c5e..e986e37b9 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -329,6 +329,7 @@ ifneq ($(LOCAL_NO_SYNTAX_CHECK),true)
+ endif
+ endif
+ $(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_CXX := $(my_cxx)
++$(LOCAL_INTERMEDIATE_TARGETS): PRIVATE_CLANG := $(my_clang)
+ 
+ # TODO: support a mix of standard extensions so that this isn't necessary
+ LOCAL_CPP_EXTENSION := $(strip $(LOCAL_CPP_EXTENSION))
+diff --git a/target/product/core_minimal.mk b/target/product/core_minimal.mk
+index 89b1cba4b..a231c49f2 100644
+--- a/target/product/core_minimal.mk
++++ b/target/product/core_minimal.mk
+@@ -79,6 +79,10 @@ PRODUCT_PACKAGES += \
+ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.software.webview.xml:system/etc/permissions/android.software.webview.xml
+ 
++PRODUCT_PACKAGES += \
++    libwebviewchromium_plat_support \
++    libwebviewchromium_loader
++
+ # The order of PRODUCT_BOOT_JARS matters.
+ PRODUCT_BOOT_JARS := \
+     core-libart \

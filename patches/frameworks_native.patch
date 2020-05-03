@@ -1,0 +1,165 @@
+diff --git a/include/ui/GraphicBufferMapper.h b/include/ui/GraphicBufferMapper.h
+index 0ffc582cb..e10492273 100644
+--- a/include/ui/GraphicBufferMapper.h
++++ b/include/ui/GraphicBufferMapper.h
+@@ -62,6 +62,10 @@ public:
+     status_t getphys(buffer_handle_t handle, void** paddr);
+ #endif
+ 
++#ifdef MTK_MT6589
++    status_t getIonFd(buffer_handle_t handle, int *idx, int *num);
++#endif
++
+     // dumps information about the mapping of this handle
+     void dump(buffer_handle_t handle);
+ 
+@@ -69,6 +73,11 @@ private:
+     friend class Singleton<GraphicBufferMapper>;
+     GraphicBufferMapper();
+     gralloc_module_t const *mAllocMod;
++
++#ifdef MTK_MT6589
++    ~GraphicBufferMapper();
++    extra_device_t *mExtraDev;
++#endif
+ };
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/libs/ui/Android.mk b/libs/ui/Android.mk
+index 299167168..045d3c617 100644
+--- a/libs/ui/Android.mk
++++ b/libs/ui/Android.mk
+@@ -42,6 +42,10 @@ ifeq ($(BOARD_HAVE_PIXEL_FORMAT_INFO),true)
+ LOCAL_CFLAGS += -DHAVE_PIXEL_FORMAT_INFO
+ endif
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++endif
++
+ LOCAL_MODULE:= libui
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libs/ui/GraphicBufferMapper.cpp b/libs/ui/GraphicBufferMapper.cpp
+index ce76e7acb..f9396070c 100644
+--- a/libs/ui/GraphicBufferMapper.cpp
++++ b/libs/ui/GraphicBufferMapper.cpp
+@@ -48,6 +48,13 @@ GraphicBufferMapper::GraphicBufferMapper()
+     }
+ }
+ 
++#ifdef MTK_MT6589
++GraphicBufferMapper::~GraphicBufferMapper()
++{
++    gralloc_extra_close(mExtraDev);
++}
++#endif
++
+ status_t GraphicBufferMapper::registerBuffer(buffer_handle_t handle)
+ {
+     ATRACE_CALL();
+@@ -191,6 +198,24 @@ status_t GraphicBufferMapper::getphys(buffer_handle_t handle, void** paddr)
+ }
+ #endif
+ 
++#ifdef MTK_MT6589
++status_t GraphicBufferMapper::getIonFd(buffer_handle_t handle, int *idx, int *num)
++{
++    ATRACE_CALL();
++    status_t err;
++
++    if (!mExtraDev) {
++        ALOGE("gralloc extra device is not supported");
++        return INVALID_OPERATION;
++    }
++
++    err = mExtraDev->getIonFd(mExtraDev, handle, idx, num);
++
++    ALOGW_IF(err, "getIonFd(...) failed %d (%s)", err, strerror(-err));
++    return err;
++}
++#endif
++
+ 
+ // ---------------------------------------------------------------------------
+ }; // namespace android
+diff --git a/opengl/libagl/egl.cpp b/opengl/libagl/egl.cpp
+index 24e32598b..7b56262f6 100644
+--- a/opengl/libagl/egl.cpp
++++ b/opengl/libagl/egl.cpp
+@@ -2051,6 +2051,13 @@ EGLImageKHR eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+         case HAL_PIXEL_FORMAT_RGB_888:
+         case HAL_PIXEL_FORMAT_RGB_565:
+         case HAL_PIXEL_FORMAT_BGRA_8888:
++ //shallytest, for sw gralloc interface
++        case HAL_PIXEL_FORMAT_YV12:
++        case HAL_PIXEL_FORMAT_I420:
++        case HAL_PIXEL_FORMAT_NV12_BLK:
++        case HAL_PIXEL_FORMAT_NV12_BLK_FCM:
++        //~shallytest, for sw gralloc interface
++
+             break;
+         default:
+             return setError(EGL_BAD_PARAMETER, EGL_NO_IMAGE_KHR);
+diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
+index 937665b86..e9fb2d5af 100644
+--- a/opengl/libs/EGL/eglApi.cpp
++++ b/opengl/libs/EGL/eglApi.cpp
+@@ -139,11 +139,13 @@ static const extention_map_t sExtensionMap[] = {
+     { "eglGetSyncAttribKHR",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSyncAttribKHR },
+ 
++#ifndef MTK_HARDWARE
+     // EGL_NV_system_time
+     { "eglGetSystemTimeFrequencyNV",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeFrequencyNV },
+     { "eglGetSystemTimeNV",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeNV },
++#endif
+ 
+     // EGL_KHR_wait_sync
+     { "eglWaitSyncKHR",
+@@ -1610,6 +1612,7 @@ EGLBoolean eglGpuPerfHintQCOM(EGLDisplay dpy, EGLContext ctx, EGLint *attrib_lis
+ // ----------------------------------------------------------------------------
+ // NVIDIA extensions
+ // ----------------------------------------------------------------------------
++#ifndef MTK_HARDWARE
+ EGLuint64NV eglGetSystemTimeFrequencyNV()
+ {
+     clearError();
+@@ -1645,3 +1648,4 @@ EGLuint64NV eglGetSystemTimeNV()
+ 
+     return setErrorQuiet(EGL_BAD_DISPLAY, 0);
+ }
++#endif
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index f9a6852b6..ae9f84279 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -40,6 +40,10 @@ LOCAL_SRC_FILES:= \
+ LOCAL_CFLAGS:= -DLOG_TAG=\"SurfaceFlinger\"
+ LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++endif
++
+ ifeq ($(TARGET_BOARD_PLATFORM),omap4)
+ 	LOCAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
+ endif
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index ca3f0279f..614eedb7d 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -3747,6 +3747,11 @@ status_t SurfaceFlinger::captureScreenImplLocked(
+         bool useReadPixels)
+ {
+     ATRACE_CALL();
++    
++// Rotation artifact problems when useReadPixels is false
++#ifdef MTK_MT6589
++    useReadPixels = true;
++#endif
+ 
+     // get screen geometry
+     const uint32_t hw_w = hw->getWidth();

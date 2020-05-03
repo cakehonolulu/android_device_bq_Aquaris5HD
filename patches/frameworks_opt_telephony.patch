@@ -1,0 +1,166 @@
+diff --git a/src/java/com/android/internal/telephony/SubscriptionController.java b/src/java/com/android/internal/telephony/SubscriptionController.java
+index 4d252de5..3f6067bc 100755
+--- a/src/java/com/android/internal/telephony/SubscriptionController.java
++++ b/src/java/com/android/internal/telephony/SubscriptionController.java
+@@ -1427,9 +1427,7 @@ public class SubscriptionController extends ISub.Stub {
+             reqStatus = PhoneConstants.SUCCESS;
+         }
+         mScheduler.updateCurrentDds(null);
+-        broadcastDefaultDataSubIdChanged(subId);
+-
+-        updateAllDataConnectionTrackers();
++        broadcastDefaultDataSubIdChanged(reqStatus);
+     }
+ 
+     public void setDefaultDataSubId(int subId) {
+@@ -1445,6 +1443,12 @@ public class SubscriptionController extends ISub.Stub {
+         }
+         mDctController.setDefaultDataSubId(subId);
+ 
++        Settings.Global.putInt(mContext.getContentResolver(),
++                Settings.Global.MULTI_SIM_DATA_CALL_SUBSCRIPTION, subId);
++        broadcastDefaultDataSubIdChanged(subId);
++
++        // FIXME is this still needed?
++        updateAllDataConnectionTrackers();
+     }
+ 
+     private void setDefaultDataSubNetworkType(int subId) {
+diff --git a/src/java/com/android/internal/telephony/SubscriptionInfoUpdater.java b/src/java/com/android/internal/telephony/SubscriptionInfoUpdater.java
+index 95f805e5..a8063740 100644
+--- a/src/java/com/android/internal/telephony/SubscriptionInfoUpdater.java
++++ b/src/java/com/android/internal/telephony/SubscriptionInfoUpdater.java
+@@ -225,7 +225,7 @@ public class SubscriptionInfoUpdater extends Handler {
+                         mIccId[slotId] = ICCID_STRING_FOR_NO_SIM;
+                     }
+                 } else {
+-                    mIccId[slotId] = ICCID_STRING_FOR_NO_SIM;
++                    mIccId[slotId] = mFh[slotId].needsFakeIccid() ? IccConstants.FAKE_ICCID : ICCID_STRING_FOR_NO_SIM;
+                     logd("Query IccId fail: " + ar.exception);
+                 }
+                 logd("mIccId[" + slotId + "] = " + mIccId[slotId]);
+diff --git a/src/java/com/android/internal/telephony/dataconnection/DcSwitchStateMachine.java b/src/java/com/android/internal/telephony/dataconnection/DcSwitchStateMachine.java
+index 1ed407e5..705559e3 100644
+--- a/src/java/com/android/internal/telephony/dataconnection/DcSwitchStateMachine.java
++++ b/src/java/com/android/internal/telephony/dataconnection/DcSwitchStateMachine.java
+@@ -31,7 +31,6 @@ import com.android.internal.telephony.SubscriptionController;
+ import android.os.Message;
+ import android.os.SystemProperties;
+ import android.telephony.Rlog;
+-import android.telephony.ServiceState;
+ 
+ public class DcSwitchStateMachine extends StateMachine {
+     private static final boolean DBG = true;
+@@ -152,11 +151,6 @@ public class DcSwitchStateMachine extends StateMachine {
+         @Override
+         public void enter() {
+             log("AttachingState: enter");
+-            if (mPhone.getServiceState() != null &&
+-                    mPhone.getServiceState().getDataRegState() == ServiceState.STATE_IN_SERVICE) {
+-                log("AttachingState: Data already registered. Move to Attached");
+-                transitionTo(mAttachedState);
+-            }
+             final PhoneBase pb = (PhoneBase)((PhoneProxy)mPhone).getActivePhone();
+             // if we're on a carrier that unattaches us if we're idle for too long
+             // (on wifi) and they won't re-attach until we poke them.  Poke them!
+@@ -183,6 +177,9 @@ public class DcSwitchStateMachine extends StateMachine {
+                         if (DBG) log("AttachingState executeAll due to autoAttach");
+                         DctController.getInstance().executeRequest(apnRequest);
+                     }
++
++                    pb.mCi.setDataAllowed(true, null);
++
+                     mAc.replyToMessage(msg, DcSwitchAsyncChannel.RSP_CONNECT,
+                             PhoneConstants.APN_REQUEST_STARTED);
+                     retVal = HANDLED;
+diff --git a/src/java/com/android/internal/telephony/gsm/GSMPhone.java b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
+index 1b8ef2d6..b321fc04 100644
+--- a/src/java/com/android/internal/telephony/gsm/GSMPhone.java
++++ b/src/java/com/android/internal/telephony/gsm/GSMPhone.java
+@@ -1531,7 +1531,12 @@ public class GSMPhone extends PhoneBase {
+             // Complete pending USSD
+ 
+             if (isUssdRelease) {
+-                found.onUssdRelease();
++                // MTK weirdness
++                if(ussdMessage != null) {
++                    found.onUssdFinished(ussdMessage, isUssdRequest);
++                } else {
++                    found.onUssdRelease();
++                }
+             } else if (isUssdError) {
+                 found.onUssdFinishedError();
+             } else {
+diff --git a/src/java/com/android/internal/telephony/uicc/IccConstants.java b/src/java/com/android/internal/telephony/uicc/IccConstants.java
+index facc9181..89164497 100644
+--- a/src/java/com/android/internal/telephony/uicc/IccConstants.java
++++ b/src/java/com/android/internal/telephony/uicc/IccConstants.java
+@@ -112,4 +112,7 @@ public interface IccConstants {
+ 
+     //UICC access
+     static final String DF_ADF = "7FFF";
++
++    //CM-Specific : Fake ICCID
++    static final String FAKE_ICCID = "00000000000001";
+ }
+diff --git a/src/java/com/android/internal/telephony/uicc/IccFileHandler.java b/src/java/com/android/internal/telephony/uicc/IccFileHandler.java
+index 24d948cc..1e8c526b 100644
+--- a/src/java/com/android/internal/telephony/uicc/IccFileHandler.java
++++ b/src/java/com/android/internal/telephony/uicc/IccFileHandler.java
+@@ -752,6 +752,10 @@ public abstract class IccFileHandler extends Handler implements IccConstants {
+         return null;
+     }
+ 
++    public boolean needsFakeIccid() {
++        return mCi.needsOldRilFeature("fakeiccid");
++    }
++
+     protected abstract String getEFPath(int efid);
+     protected abstract void logd(String s);
+ 
+diff --git a/src/java/com/android/internal/telephony/uicc/RuimRecords.java b/src/java/com/android/internal/telephony/uicc/RuimRecords.java
+index 4d16293b..883642b0 100644
+--- a/src/java/com/android/internal/telephony/uicc/RuimRecords.java
++++ b/src/java/com/android/internal/telephony/uicc/RuimRecords.java
+@@ -723,11 +723,15 @@ public final class RuimRecords extends IccRecords {
+                 data = (byte[])ar.result;
+ 
+                 if (ar.exception != null) {
+-                    break;
++                    if(mFh.needsFakeIccid()) {
++                        mIccId = FAKE_ICCID;
++                    } else {
++                        break;
++                    }
++                } else {
++                    mIccId = IccUtils.bcdToString(data, 0, data.length);
+                 }
+ 
+-                mIccId = IccUtils.bcdToString(data, 0, data.length);
+-
+                 log("iccid: " + mIccId);
+ 
+             break;
+diff --git a/src/java/com/android/internal/telephony/uicc/SIMRecords.java b/src/java/com/android/internal/telephony/uicc/SIMRecords.java
+index cd65830a..df24072d 100644
+--- a/src/java/com/android/internal/telephony/uicc/SIMRecords.java
++++ b/src/java/com/android/internal/telephony/uicc/SIMRecords.java
+@@ -876,11 +876,15 @@ public class SIMRecords extends IccRecords {
+                 data = (byte[])ar.result;
+ 
+                 if (ar.exception != null) {
+-                    break;
++                    if(mFh.needsFakeIccid()) {
++                        mIccId = FAKE_ICCID;
++                    } else {
++                        break;
++                    }
++                } else {
++                    mIccId = IccUtils.bcdToString(data, 0, data.length);
+                 }
+ 
+-                mIccId = IccUtils.bcdToString(data, 0, data.length);
+-
+                 log("iccid: " + mIccId);
+ 
+             break;

@@ -1,0 +1,817 @@
+diff --git a/healthd/Android.mk b/healthd/Android.mk
+index 37e5490cf..260f7e240 100644
+--- a/healthd/Android.mk
++++ b/healthd/Android.mk
+@@ -5,11 +5,19 @@ ifneq ($(BUILD_TINY_ANDROID),true)
+ LOCAL_PATH := $(call my-dir)
+ 
+ include $(CLEAR_VARS)
+-LOCAL_SRC_FILES := healthd_board_default.cpp healthd_msm_alarm.cpp
++LOCAL_SRC_FILES := healthd_board_default.cpp
+ LOCAL_MODULE := libhealthd.default
+ LOCAL_CFLAGS := -Werror
+ include $(BUILD_STATIC_LIBRARY)
+ 
++ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
++include $(CLEAR_VARS)
++LOCAL_SRC_FILES := healthd_msm_alarm.cpp
++LOCAL_MODULE := libhealthd.qcom
++LOCAL_CFLAGS := -Werror
++include $(BUILD_STATIC_LIBRARY)
++endif
++
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES := \
+@@ -67,6 +75,14 @@ endif
+ 
+ LOCAL_HAL_STATIC_LIBRARIES := libhealthd
+ 
++ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
++BOARD_HAL_STATIC_LIBRARIES ?= libhealthd.qcom
++endif
++
++ifeq ($(BOARD_HAS_MTK_HARDWARE),true)
++BOARD_HAL_STATIC_LIBRARIES ?= libhealthd.mtk
++endif
++
+ # Symlink /charger to /sbin/healthd
+ LOCAL_POST_INSTALL_CMD := $(hide) mkdir -p $(TARGET_ROOT_OUT) \
+     && rm -f $(TARGET_ROOT_OUT)/charger && ln -sf /sbin/healthd $(TARGET_ROOT_OUT)/charger
+diff --git a/healthd/BatteryMonitor.cpp b/healthd/BatteryMonitor.cpp
+index 66c4e8e4a..1022490f7 100644
+--- a/healthd/BatteryMonitor.cpp
++++ b/healthd/BatteryMonitor.cpp
+@@ -198,8 +198,11 @@ bool BatteryMonitor::update(void) {
+     props.batteryLevel = mBatteryFixedCapacity ?
+         mBatteryFixedCapacity :
+         getIntField(mHealthdConfig->batteryCapacityPath);
++#ifndef MTK_HARDWARE
+     props.batteryVoltage = getIntField(mHealthdConfig->batteryVoltagePath) / 1000;
+-
++#else
++    props.batteryVoltage = getIntField(mHealthdConfig->batteryVoltagePath);
++#endif
+     props.batteryTemperature = mBatteryFixedTemperature ?
+         mBatteryFixedTemperature :
+         getIntField(mHealthdConfig->batteryTemperaturePath);
+diff --git a/healthd/healthd.h b/healthd/healthd.h
+index 2cbdabf34..a8dbde921 100644
+--- a/healthd/healthd.h
++++ b/healthd/healthd.h
+@@ -158,5 +158,20 @@ void healthd_board_init(struct healthd_config *config);
+ // is to be logged, or non-zero to prevent logging this information.
+ 
+ int healthd_board_battery_update(struct android::BatteryProperties *props);
++//This API is called to turn on/off the display backlight incase it can't be
++//handle correcty in the display driver by calling gr_fg_blank();
++void healthd_board_mode_charger_set_backlight(bool en);
++
++//This API is called to update the battery/charging status by using the user
++//noticeable method other then the animation, such as: LEDs
++void healthd_board_mode_charger_battery_update(struct android::BatteryProperties *batt_prop);
++
++//This API is used to handle some board specific charger mode initialization,
++//such as: checking the charging is enabled or not.
++void healthd_board_mode_charger_init(void);
++
++//This API is called in the draw_battery() function to draw more infomation
++//about the battery on the animation, such as the SoC (State of Charge).
++void healthd_board_mode_charger_draw_battery(struct android::BatteryProperties *batt_prop);
+ 
+ #endif /* _HEALTHD_H_ */
+diff --git a/healthd/healthd_board_default.cpp b/healthd/healthd_board_default.cpp
+index 3d0736275..660f2709f 100644
+--- a/healthd/healthd_board_default.cpp
++++ b/healthd/healthd_board_default.cpp
+@@ -15,12 +15,10 @@
+  */
+ 
+ #include <healthd.h>
+-#include "healthd_msm.h"
+ 
+ void healthd_board_init(struct healthd_config*)
+ {
+     // use defaults
+-    power_off_alarm_init();
+ }
+ 
+ 
+@@ -29,3 +27,22 @@ int healthd_board_battery_update(struct android::BatteryProperties*)
+     // return 0 to log periodic polled battery status to kernel log
+     return 1;
+ }
++
++void healthd_board_mode_charger_draw_battery(struct android::BatteryProperties*)
++{
++
++}
++
++void healthd_board_mode_charger_battery_update(struct android::BatteryProperties*)
++{
++
++}
++
++void healthd_board_mode_charger_set_backlight(bool)
++{
++
++}
++
++void healthd_board_mode_charger_init()
++{
++}
+diff --git a/include/netutils/ifc.h b/include/netutils/ifc.h
+index 3b272343d..b7d681a81 100644
+--- a/include/netutils/ifc.h
++++ b/include/netutils/ifc.h
+@@ -61,6 +61,8 @@ extern int ifc_configure(const char *ifname, in_addr_t address,
+ 
+ extern in_addr_t prefixLengthToIpv4Netmask(int prefix_length);
+ 
++extern int ifc_set_throttle(const char *ifname, int rxKbps, int txKbps);
++
+ __END_DECLS
+ 
+ #endif /* _NETUTILS_IFC_H_ */
+diff --git a/include/private/android_filesystem_config.h b/include/private/android_filesystem_config.h
+index 44cb4ba00..3fc781a6b 100644
+--- a/include/private/android_filesystem_config.h
++++ b/include/private/android_filesystem_config.h
+@@ -107,6 +107,11 @@
+ #endif
+ 
+ #define AID_EVERYBODY     9997  /* shared between all apps in the same profile */
++
++#ifdef MTK_G_MT6589
++#define AID_CCCI 9996	
++#define AID_NVRAM 9997	
++#endif
+  
+ #define AID_MISC          9998  /* access to misc storage */
+ #define AID_NOBODY        9999
+@@ -196,6 +201,10 @@ static const struct android_id_info android_ids[] = {
+     { "sensors",       AID_SENSORS, },
+     { "rfs",           AID_RFS, },
+     { "rfs_shared",    AID_RFS_SHARED, },
++#endif
++#ifdef MTK_G_MT6589
++    { "ccci", AID_CCCI, },
++    { "nvram", AID_NVRAM, },
+ #endif
+     { "everybody",     AID_EVERYBODY, },
+     { "misc",          AID_MISC, },
+diff --git a/include/system/graphics.h b/include/system/graphics.h
+index b207ee823..badaced28 100644
+--- a/include/system/graphics.h
++++ b/include/system/graphics.h
+@@ -89,6 +89,16 @@ enum {
+      * GL_OES_EGL_image_external OpenGL ES extension.
+      */
+ 
++#ifdef MTK_HARDWARE
++    HAL_PIXEL_FORMAT_I420           = 0x00000100,     // MTK I420
++    HAL_PIXEL_FORMAT_NV12_BLK       = 0x00000101,     // MTK NV12 block progres
++    HAL_PIXEL_FORMAT_NV12_BLK_FCM   = 0x00000102,     // MTK NV12 block field m
++
++    HAL_PIXEL_FORMAT_YUV_PRIVATE    = 0x00000103,     // I420 or NV12_BLK or NV
++
++    HAL_PIXEL_FORMAT_I420_DI        = 0x00000106,     // MTK I420 for deinterla
++    HAL_PIXEL_FORMAT_YV12_DI        = 0x00000107,     // MTK YV12 for deinterla
++#endif
+     /*
+      * Android YUV format:
+      *
+diff --git a/include/utils/CallStack.h b/include/utils/CallStack.h
+index 27e89f462..27fbb12dd 100644
+--- a/include/utils/CallStack.h
++++ b/include/utils/CallStack.h
+@@ -50,6 +50,15 @@ public:
+     void log(const char* logtag,
+              android_LogPriority priority = ANDROID_LOG_DEBUG,
+              const char* prefix = 0) const;
++/*#ifdef MTK_MT6589
++    void update(int32_t ignoreDepth=1, int32_t maxDepth=MAX_DEPTH);
++
++    // Dump a stack trace to the log
++    void dump(const char* prefix = 0) const;
++#endif*/
++
++    // Dump a stack trace to the log using the supplied logtag
++    void dump(const char* logtag, const char* prefix = 0) const;
+ 
+     // Dump a stack trace to the specified file descriptor.
+     void dump(int fd, int indent = 0, const char* prefix = 0) const;
+diff --git a/init/Android.mk b/init/Android.mk
+index c6863bfbe..0cff1e5a3 100755
+--- a/init/Android.mk
++++ b/init/Android.mk
+@@ -46,6 +46,10 @@ ifneq ($(TARGET_NR_SVC_SUPP_GIDS),)
+ LOCAL_CFLAGS += -DNR_SVC_SUPP_GIDS=$(TARGET_NR_SVC_SUPP_GIDS)
+ endif
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++endif
++
+ LOCAL_MODULE:= init
+ 
+ LOCAL_FORCE_STATIC_EXECUTABLE := true
+diff --git a/init/init.c b/init/init.c
+index 1cce8d8ca..9be8fcacd 100644
+--- a/init/init.c
++++ b/init/init.c
+@@ -721,6 +721,44 @@ static int console_init_action(int nargs, char **args)
+     return 0;
+ }
+ 
++#ifdef MTK_HARDWARE
++static int read_serialno()
++{
++    char pval[PROP_VALUE_MAX];
++    int fd;
++    char serialno[32];
++    size_t s;
++
++    int ret = property_get("ro.boot.serialno", pval);
++    if (ret > 0) {
++        NOTICE("Already get serial number from cmdline\n");
++        return 1;
++    }
++
++    fd = open("/sys/sys_info/serial_number", O_RDWR);
++    if (fd < 0) {
++        NOTICE("fail to open: %s\n", "/sys/sys_info/serial_number");
++        return 0;
++    }
++    s = read(fd, serialno, sizeof(char)*32);
++
++    serialno[s-1] = '\0';
++
++    close(fd);
++
++    if (s <= 0) {
++	    NOTICE("could not read serial number sys file\n");
++	    return 0;
++	}
++
++    NOTICE( "serial number=%s\n",serialno);
++
++    property_set("ro.boot.serialno", serialno);
++
++    return 1;
++}
++#endif
++
+ static void import_kernel_nv(char *name, int for_emulator)
+ {
+     char *value = strchr(name, '=');
+@@ -770,6 +808,9 @@ static void export_kernel_boot_props(void)
+         { "ro.boot.mode", "ro.bootmode", "unknown", },
+         { "ro.boot.baseband", "ro.baseband", "unknown", },
+         { "ro.boot.bootloader", "ro.bootloader", "unknown", },
++#ifdef MTK_MT6589     
++        { "ro.boot.hardware",   "ro.hardware",   "mt6589", },
++#endif
+     };
+ 
+     for (i = 0; i < ARRAY_SIZE(prop_map); i++) {
+@@ -820,6 +861,10 @@ static void process_kernel_cmdline(void)
+     if (qemu[0])
+         import_kernel_cmdline(1, import_kernel_nv);
+ 
++#ifdef MTK_HARDWARE
++    read_serialno();
++#endif
++
+     /* now propogate the info given on command line to internal variables
+      * used by init as well as the current required properties
+      */
+@@ -926,6 +971,8 @@ static bool selinux_is_disabled(void)
+ 
+ static bool selinux_is_enforcing(void)
+ {
++    return false;  /*return false then set to permissive*/
++
+ #ifdef ALLOW_DISABLE_SELINUX
+     char tmp[PROP_VALUE_MAX];
+ 
+@@ -1030,7 +1077,7 @@ static int charging_mode_booting(void)
+         return 0;
+ 
+     close(f);
+-    return ('1' == cmb);
++    return ('8' == cmb);
+ #endif
+ }
+ 
+diff --git a/libbacktrace/Android.mk b/libbacktrace/Android.mk
+index 9588dd6d7..d2196b10c 100755
+--- a/libbacktrace/Android.mk
++++ b/libbacktrace/Android.mk
+@@ -46,6 +46,10 @@ libbacktrace_shared_libraries_target := \
+ 	libcutils \
+ 	libgccdemangle \
+ 
++# To enable using libunwind on each arch, add it to this list.
++libunwind_architectures := arm arm64 mips x86 x86_64
++
++ifeq ($(TARGET_ARCH),$(filter $(TARGET_ARCH),$(libunwind_architectures)))
+ libbacktrace_src_files += \
+ 	UnwindCurrent.cpp \
+ 	UnwindMap.cpp \
+@@ -64,10 +68,29 @@ libbacktrace_shared_libraries_host := \
+ libbacktrace_static_libraries_host := \
+ 	libcutils \
+ 
++else
++libbacktrace_src_files += \
++	Corkscrew.cpp \
++
++libbacktrace_c_includes := \
++	system/core/libcorkscrew \
++
++	
++libbacktrace_shared_libraries := \
++	libcorkscrew \
++
++libbacktrace_shared_libraries_target += \
++	libdl \
++
+ libbacktrace_ldlibs_host := \
++	-ldl \
++
++libbacktrace_ldlibs_host += \
+ 	-lpthread \
+ 	-lrt \
+ 
++endif
++
+ module := libbacktrace
+ module_tag := optional
+ build_type := target
+@@ -109,9 +132,6 @@ libbacktrace_libc++_shared_libraries_host := \
+ libbacktrace_libc++_static_libraries_host := \
+ 	libcutils \
+ 
+-libbacktrace_libc++_ldlibs_host := \
+-	-lpthread \
+-	-lrt \
+ 
+ libbacktrace_libc++_libc++ := true
+ 
+diff --git a/libbacktrace/BacktraceImpl.cpp b/libbacktrace/BacktraceImpl.cpp
+index 469360075..a4173a6a0 100644
+--- a/libbacktrace/BacktraceImpl.cpp
++++ b/libbacktrace/BacktraceImpl.cpp
+@@ -60,8 +60,23 @@ bool Backtrace::Unwind(size_t num_ignore_frames, ucontext_t* ucontext) {
+   return impl_->Unwind(num_ignore_frames, ucontext);
+ }
+ 
++extern "C" char* __cxa_demangle(const char* mangled, char* buf, size_t* len,
++                                int* status);
+ std::string Backtrace::GetFunctionName(uintptr_t pc, uintptr_t* offset) {
+   std::string func_name = impl_->GetFunctionNameRaw(pc, offset);
++  if (!func_name.empty()) {
++#if defined(__APPLE__)
++    // Mac OS' __cxa_demangle demangles "f" as "float"; last tested on 10.7.
++    if (func_name[0] != '_') {
++      return func_name;
++    }
++#endif
++    char* name = __cxa_demangle(func_name.c_str(), 0, 0, 0);
++    if (name) {
++      func_name = name;
++      free(name);
++    }
++  }
+   return func_name;
+ }
+ 
+diff --git a/libbacktrace/BacktraceThread.cpp b/libbacktrace/BacktraceThread.cpp
+index 439cc3bde..a266023e4 100644
+--- a/libbacktrace/BacktraceThread.cpp
++++ b/libbacktrace/BacktraceThread.cpp
+@@ -17,15 +17,14 @@
+ #include <errno.h>
+ #include <inttypes.h>
+ #include <limits.h>
++#include <linux/futex.h>
+ #include <pthread.h>
+ #include <signal.h>
+-#include <stdlib.h>
+ #include <string.h>
+ #include <sys/syscall.h>
+ #include <sys/time.h>
+ #include <sys/types.h>
+ #include <ucontext.h>
+-#include <unistd.h>
+ 
+ #include <cutils/atomic.h>
+ 
+@@ -33,6 +32,9 @@
+ #include "BacktraceThread.h"
+ #include "thread_utils.h"
+ 
++static inline int futex(volatile int* uaddr, int op, int val, const struct timespec* ts, volatile int* uaddr2, int val3) {
++  return syscall(__NR_futex, uaddr, op, val, ts, uaddr2, val3);
++}
+ //-------------------------------------------------------------------------
+ // ThreadEntry implementation.
+ //-------------------------------------------------------------------------
+@@ -42,13 +44,7 @@ pthread_mutex_t ThreadEntry::list_mutex_ = PTHREAD_MUTEX_INITIALIZER;
+ // Assumes that ThreadEntry::list_mutex_ has already been locked before
+ // creating a ThreadEntry object.
+ ThreadEntry::ThreadEntry(pid_t pid, pid_t tid)
+-    : pid_(pid), tid_(tid), ref_count_(1), mutex_(PTHREAD_MUTEX_INITIALIZER),
+-      wait_mutex_(PTHREAD_MUTEX_INITIALIZER), wait_value_(0),
+-      next_(ThreadEntry::list_), prev_(NULL) {
+-  pthread_condattr_t attr;
+-  pthread_condattr_init(&attr);
+-  pthread_condattr_setclock(&attr, CLOCK_MONOTONIC);
+-  pthread_cond_init(&wait_cond_, &attr);
++    : pid_(pid), tid_(tid), futex_(0), ref_count_(1), mutex_(PTHREAD_MUTEX_INITIALIZER), next_(ThreadEntry::list_), prev_(NULL) {
+ 
+   // Add ourselves to the list.
+   if (ThreadEntry::list_) {
+@@ -104,34 +100,22 @@ ThreadEntry::~ThreadEntry() {
+   next_ = NULL;
+   prev_ = NULL;
+ 
+-  pthread_cond_destroy(&wait_cond_);
+ }
+ 
+ void ThreadEntry::Wait(int value) {
+   timespec ts;
+-  if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1) {
+-    BACK_LOGW("clock_gettime failed: %s", strerror(errno));
+-    abort();
+-  }
+-  ts.tv_sec += 10;
+-
+-  pthread_mutex_lock(&wait_mutex_);
+-  while (wait_value_ != value) {
+-    int ret = pthread_cond_timedwait(&wait_cond_, &wait_mutex_, &ts);
+-    if (ret != 0) {
+-      BACK_LOGW("pthread_cond_timedwait failed: %s", strerror(ret));
+-      break;
+-    }
++  ts.tv_sec = 10;
++  ts.tv_nsec = 0;
++  errno = 0;
++  futex(&futex_, FUTEX_WAIT, value, &ts, NULL, 0);
++  if (errno != 0 && errno != EWOULDBLOCK) {
++    BACK_LOGW("futex wait failed, futex = %d: %s", futex_, strerror(errno));
+   }
+-  pthread_mutex_unlock(&wait_mutex_);
+ }
+ 
+ void ThreadEntry::Wake() {
+-  pthread_mutex_lock(&wait_mutex_);
+-  wait_value_++;
+-  pthread_mutex_unlock(&wait_mutex_);
+-
+-  pthread_cond_signal(&wait_cond_);
++  futex_++;
++  futex(&futex_, FUTEX_WAKE, INT_MAX, NULL, NULL, 0);
+ }
+ 
+ void ThreadEntry::CopyUcontextFromSigcontext(void* sigcontext) {
+@@ -159,7 +143,7 @@ static void SignalHandler(int, siginfo_t*, void* sigcontext) {
+ 
+   // Pause the thread until the unwind is complete. This avoids having
+   // the thread run ahead causing problems.
+-  entry->Wait(2);
++  entry->Wait(1);
+ 
+   ThreadEntry::Remove(entry);
+ }
+@@ -211,7 +195,7 @@ bool BacktraceThread::Unwind(size_t num_ignore_frames, ucontext_t* ucontext) {
+   }
+ 
+   // Wait for the thread to get the ucontext.
+-  entry->Wait(1);
++  entry->Wait(0);
+ 
+   // After the thread has received the signal, allow other unwinders to
+   // continue.
+diff --git a/libbacktrace/BacktraceThread.h b/libbacktrace/BacktraceThread.h
+index 99a863878..5e9d34c9f 100644
+--- a/libbacktrace/BacktraceThread.h
++++ b/libbacktrace/BacktraceThread.h
+@@ -49,9 +49,8 @@ public:
+   inline void Lock() {
+     pthread_mutex_lock(&mutex_);
+ 
+-    // Always reset the wait value since this could be the first or nth
+-    // time this entry is locked.
+-    wait_value_ = 0;
++    // Reset the futex value in case of multiple unwinds of the same thread.
++    futex_ = 0;
+   }
+ 
+   inline void Unlock() {
+@@ -68,11 +67,9 @@ private:
+ 
+   pid_t pid_;
+   pid_t tid_;
++  int futex_;
+   int ref_count_;
+   pthread_mutex_t mutex_;
+-  pthread_mutex_t wait_mutex_;
+-  pthread_cond_t wait_cond_;
+-  int wait_value_;
+   ThreadEntry* next_;
+   ThreadEntry* prev_;
+   ucontext_t ucontext_;
+diff --git a/libbacktrace/backtrace_test.cpp b/libbacktrace/backtrace_test.cpp
+index 8002ed6b8..ed6b21112 100644
+--- a/libbacktrace/backtrace_test.cpp
++++ b/libbacktrace/backtrace_test.cpp
+@@ -51,7 +51,7 @@
+ #define NS_PER_SEC              1000000000ULL
+ 
+ // Number of simultaneous dumping operations to perform.
+-#define NUM_THREADS  40
++#define NUM_THREADS  20
+ 
+ // Number of simultaneous threads running in our forked process.
+ #define NUM_PTRACE_THREADS 5
+@@ -486,13 +486,6 @@ TEST(libbacktrace, thread_level_trace) {
+   struct sigaction new_action;
+   ASSERT_TRUE(sigaction(THREAD_SIGNAL, NULL, &new_action) == 0);
+   EXPECT_EQ(cur_action.sa_sigaction, new_action.sa_sigaction);
+-  // The SA_RESTORER flag gets set behind our back, so a direct comparison
+-  // doesn't work unless we mask the value off. Mips doesn't have this
+-  // flag, so skip this on that platform.
+-#ifdef SA_RESTORER
+-  cur_action.sa_flags &= ~SA_RESTORER;
+-  new_action.sa_flags &= ~SA_RESTORER;
+-#endif
+   EXPECT_EQ(cur_action.sa_flags, new_action.sa_flags);
+ }
+ 
+@@ -590,7 +583,7 @@ TEST(libbacktrace, thread_multiple_dump) {
+ 
+   // Wait for tids to be set.
+   for (std::vector<thread_t>::iterator it = runners.begin(); it != runners.end(); ++it) {
+-    ASSERT_TRUE(WaitForNonZero(&it->state, 30));
++    ASSERT_TRUE(WaitForNonZero(&it->state, 10));
+   }
+ 
+   // Start all of the dumpers at once, they will spin until they are signalled
+@@ -609,7 +602,7 @@ TEST(libbacktrace, thread_multiple_dump) {
+   android_atomic_acquire_store(1, &dump_now);
+ 
+   for (size_t i = 0; i < NUM_THREADS; i++) {
+-    ASSERT_TRUE(WaitForNonZero(&dumpers[i].done, 30));
++    ASSERT_TRUE(WaitForNonZero(&dumpers[i].done, 10));
+ 
+     // Tell the runner thread to exit its infinite loop.
+     android_atomic_acquire_store(0, &runners[i].state);
+@@ -632,7 +625,7 @@ TEST(libbacktrace, thread_multiple_dump_same_thread) {
+   ASSERT_TRUE(pthread_create(&runner.threadId, &attr, ThreadMaxRun, &runner) == 0);
+ 
+   // Wait for tids to be set.
+-  ASSERT_TRUE(WaitForNonZero(&runner.state, 30));
++  ASSERT_TRUE(WaitForNonZero(&runner.state, 10));
+ 
+   // Start all of the dumpers at once, they will spin until they are signalled
+   // to begin their dump run.
+@@ -652,7 +645,7 @@ TEST(libbacktrace, thread_multiple_dump_same_thread) {
+   android_atomic_acquire_store(1, &dump_now);
+ 
+   for (size_t i = 0; i < NUM_THREADS; i++) {
+-    ASSERT_TRUE(WaitForNonZero(&dumpers[i].done, 30));
++    ASSERT_TRUE(WaitForNonZero(&dumpers[i].done, 100));
+ 
+     ASSERT_TRUE(dumpers[i].backtrace != NULL);
+     VerifyMaxDump(dumpers[i].backtrace);
+diff --git a/libcutils/Android.mk b/libcutils/Android.mk
+index bee2bd752..da1e54495 100644
+--- a/libcutils/Android.mk
++++ b/libcutils/Android.mk
+@@ -79,7 +79,7 @@ LOCAL_SRC_FILES := $(commonSources) $(commonHostSources) dlmalloc_stubs.c
+ LOCAL_STATIC_LIBRARIES := liblog
+ LOCAL_CFLAGS += $(hostSmpFlag)
+ ifneq ($(HOST_OS),windows)
+-LOCAL_CFLAGS += -Werror
++#LOCAL_CFLAGS += -Werror
+ endif
+ LOCAL_MULTILIB := both
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+@@ -92,7 +92,7 @@ include $(CLEAR_VARS)
+ LOCAL_MODULE := tst_str_parms
+ LOCAL_CFLAGS += -DTEST_STR_PARMS
+ ifneq ($(HOST_OS),windows)
+-LOCAL_CFLAGS += -Werror
++#LOCAL_CFLAGS += -Werror
+ endif
+ LOCAL_SRC_FILES := str_parms.c hashmap.c memory.c
+ LOCAL_STATIC_LIBRARIES := liblog
+@@ -118,6 +118,11 @@ LOCAL_SRC_FILES := $(commonSources) \
+         trace.c \
+         uevent.c \
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_SRC_FILES += pmem-dev.cpp \
++                   MediatekHacks.cpp
++endif
++
+ LOCAL_SRC_FILES_arm += \
+         arch-arm/memset32.S \
+ 
+@@ -141,6 +146,22 @@ LOCAL_CFLAGS_mips += -DHAVE_MEMSET16 -DHAVE_MEMSET32
+ LOCAL_CFLAGS_x86 += -DHAVE_MEMSET16 -DHAVE_MEMSET32
+ LOCAL_CFLAGS_x86_64 += -DHAVE_MEMSET16 -DHAVE_MEMSET32
+ 
++
++ifeq ($(TARGET_ARCH),arm)
++LOCAL_SRC_FILES += arch-arm/memset32.S
++else  # !arm
++ifeq ($(TARGET_ARCH_VARIANT),x86-atom)
++LOCAL_CFLAGS += -DHAVE_MEMSET16 -DHAVE_MEMSET32
++LOCAL_SRC_FILES += arch-x86/android_memset16.S arch-x86/android_memset32.S memory.c
++else # !x86-atom
++ifeq ($(TARGET_ARCH),mips)
++LOCAL_SRC_FILES += arch-mips/android_memset.c
++else # !mips
++LOCAL_SRC_FILES += memory.c
++endif # !mips
++endif # !x86-atom
++endif # !arm
++
+ ifneq ($(TARGET_RECOVERY_PRE_COMMAND),)
+     LOCAL_CFLAGS += -DRECOVERY_PRE_COMMAND='$(TARGET_RECOVERY_PRE_COMMAND)'
+ endif
+@@ -151,7 +172,7 @@ endif
+ 
+ LOCAL_C_INCLUDES := $(libcutils_c_includes)
+ LOCAL_STATIC_LIBRARIES := liblog
+-LOCAL_CFLAGS += $(targetSmpFlag) -Werror
++LOCAL_CFLAGS += $(targetSmpFlag)
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+ include $(BUILD_STATIC_LIBRARY)
+ 
+@@ -161,14 +182,14 @@ LOCAL_MODULE := libcutils
+ # liblog symbols present in libcutils.
+ LOCAL_WHOLE_STATIC_LIBRARIES := libcutils liblog
+ LOCAL_SHARED_LIBRARIES := liblog
+-LOCAL_CFLAGS += $(targetSmpFlag) -Werror
++LOCAL_CFLAGS += $(targetSmpFlag)
+ LOCAL_C_INCLUDES := $(libcutils_c_includes)
+ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/Android.mk
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := tst_str_parms
+-LOCAL_CFLAGS += -DTEST_STR_PARMS -Werror
++LOCAL_CFLAGS += -DTEST_STR_PARMS
+ LOCAL_SRC_FILES := str_parms.c hashmap.c memory.c
+ LOCAL_SHARED_LIBRARIES := liblog
+ LOCAL_MODULE_TAGS := optional
+diff --git a/liblog/Android.mk b/liblog/Android.mk
+index 6b2529c00..130887522 100644
+--- a/liblog/Android.mk
++++ b/liblog/Android.mk
+@@ -59,7 +59,7 @@ endif
+ # ========================================================
+ LOCAL_MODULE := liblog
+ LOCAL_SRC_FILES := $(liblog_host_sources)
+-LOCAL_CFLAGS := -DFAKE_LOG_DEVICE=1 -Werror
++LOCAL_CFLAGS := -DFAKE_LOG_DEVICE=1
+ LOCAL_MULTILIB := both
+ include $(BUILD_HOST_STATIC_LIBRARY)
+ 
+@@ -81,13 +81,16 @@ endif
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := liblog
+ LOCAL_SRC_FILES := $(liblog_target_sources)
+-LOCAL_CFLAGS := $(LIBLOG_CFLAGS) -Werror
++LOCAL_CFLAGS := $(LIBLOG_CFLAGS) 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++endif
+ include $(BUILD_STATIC_LIBRARY)
+ 
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := liblog
+ LOCAL_WHOLE_STATIC_LIBRARIES := liblog
+-LOCAL_CFLAGS := $(LIBLOG_CFLAGS) -Werror
++LOCAL_CFLAGS := $(LIBLOG_CFLAGS) 
+ include $(BUILD_SHARED_LIBRARY)
+ 
+ include $(call first-makefiles-under,$(LOCAL_PATH))
+diff --git a/libnetutils/ifc_utils.c b/libnetutils/ifc_utils.c
+index cb3722d84..e6e9bcdce 100644
+--- a/libnetutils/ifc_utils.c
++++ b/libnetutils/ifc_utils.c
+@@ -711,3 +711,8 @@ ifc_configure(const char *ifname,
+ 
+     return 0;
+ }
++
++int ifc_set_throttle(const char *ifname, int rxKbps, int txKbps) {
++    ALOGD("ifc_set_throttle: ifname=%s, rxKbps=%d, txKbps=%d", ifname, rxKbps, txKbps);
++    return 0;
++}
+diff --git a/libutils/Android.mk b/libutils/Android.mk
+index 035846bb4..6565d4474 100644
+--- a/libutils/Android.mk
++++ b/libutils/Android.mk
+@@ -91,6 +91,11 @@ LOCAL_CFLAGS += -DALIGN_DOUBLE
+ endif
+ LOCAL_CFLAGS += -Werror
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++LOCAL_SRC_FILES += MediatekHacks.cpp
++endif
++
+ LOCAL_C_INCLUDES += \
+ 		bionic/libc \
+ 		external/zlib
+diff --git a/libutils/CallStack.cpp b/libutils/CallStack.cpp
+index 0bfb520e9..0d825b21d 100644
+--- a/libutils/CallStack.cpp
++++ b/libutils/CallStack.cpp
+@@ -54,6 +54,25 @@ void CallStack::log(const char* logtag, android_LogPriority priority, const char
+     print(printer);
+ }
+ 
++/*#ifdef MTK_MT6589
++void CallStack::update(int32_t ignoreDepth, int32_t maxDepth) {
++    update(ignoreDepth, maxDepth, CURRENT_THREAD);
++}
++
++void CallStack::dump(const char* prefix) const {
++    backtrace_symbol_t symbols[mCount];
++
++    get_backtrace_symbols(mStack, mCount, symbols);
++    for (size_t i = 0; i < mCount; i++) {
++        char line[MAX_BACKTRACE_LINE_LENGTH];
++        format_backtrace_line(i, &mStack[i], &symbols[i],
++                line, MAX_BACKTRACE_LINE_LENGTH);
++        ALOGD("%s%s", prefix, line);
++    }
++    free_backtrace_symbols(symbols, mCount);
++}
++#endif*/
++
+ void CallStack::dump(int fd, int indent, const char* prefix) const {
+     FdPrinter printer(fd, indent, prefix);
+     print(printer);
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 001ab1310..2fd21927a 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -513,7 +513,7 @@ on property:ro.debuggable=1
+ service adbd /sbin/adbd --root_seclabel=u:r:su:s0
+     class core
+     socket adbd stream 660 system system
+-    disabled
++    enabled
+     seclabel u:r:adbd:s0
+ 
+ # adbd on at boot in emulator
+@@ -554,28 +554,21 @@ service debuggerd /system/bin/debuggerd
+ service debuggerd64 /system/bin/debuggerd64
+     class main
+ 
+-service ril-daemon /system/bin/rild
+-    class main
+-    socket rild stream 660 root radio
+-    socket rild-debug stream 660 radio system
+-    user root
+-    group radio cache inet misc audio sdcard_rw qcom_diag log
+-
+ service surfaceflinger /system/bin/surfaceflinger
+     class core
+-    user system
++    user root
+     group graphics drmrpc
+     onrestart restart zygote
+ 
+ service drm /system/bin/drmserver
+     class main
+     user drm
+-    group drm system inet drmrpc
++    group drm system inet drmrpc sdcard_r
+ 
+ service media /system/bin/mediaserver
+     class main
+-    user media
+-    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm qcom_diag
++    user root
++    group audio camera inet net_bt net_bt_admin net_bw_acct drmrpc mediadrm qcom_diag media sdcard_r system net_bt_stack
+     ioprio rt 4
+ 
+ # One shot invocation to deal with encrypted volume.
+@@ -595,7 +588,7 @@ service encrypt /system/bin/vdc --wait cryptfs enablecrypto inplace default
+ service bootanim /system/bin/bootanimation
+     class core
+     user graphics
+-    group graphics audio
++    group graphics media audio
+     disabled
+     oneshot
+ 
