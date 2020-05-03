@@ -39,7 +39,7 @@ on init
     mkdir /cache 0771 system cache
 
     # Change ION driver permission
-    chmod 0644 /dev/ion
+    chmod 0666 /dev/ion
 
     # Change MMP driver permission
     chmod 0644 /dev/mmp
@@ -67,7 +67,7 @@ on fs
     insmod /system/lib/modules/devinfo.ko
     exec /system/xbin/mknod /dev/devmap c 196 0
     chmod 0444 /dev/devmap
-    chown root system /dev/devmap
+    chown root media /dev/devmap
     start pvrsrvctl
 
     mkdir /dev/radio 0770 radio radio
@@ -88,12 +88,7 @@ on post-fs-data
     chown system system /cache/dalvik-cache
     chmod 0771 /cache/dalvik-cache
  
-    #nvram
-    mkdir /data/nvram 0770 media system
-    mkdir /data/nvram/APCFG 0770 media system
-    mkdir /data/nvram/APCFG/APRDCL 0770 media system
-    mkdir /data/nvram/APCFG/APRDEB 0770 media system
-    chmod 0770 /dev/nvram 
+    mkdir /data/nvram 0770 root nvram
 
     #give system access to rfkill device node
     chmod 0660 /dev/rfkill
@@ -206,9 +201,25 @@ on post-fs-data
     chmod 0660 /dev/sw_sync
     chown system graphics /dev/sw_sync
 
+    # EM baseband file  
+    chown root diag /system/bin/baseband_regdump    
+    chmod 4750 /system/bin/baseband_regdump 
+
     #pmu
     chown root radio /sys/devices/platform/mt-pmic/pmic_access
     chmod 0664 /sys/devices/platform/mt-pmic/pmic_access
+
+    # EM CPU Speed Stress   
+    chown root radio /proc/cpu_ss/cpu_ss_debug_mode 
+    chown root radio /proc/cpu_ss/cpu_ss_mode   
+    chown root radio /proc/cpu_ss/cpu_ss_period 
+    chown root radio /proc/cpu_ss/cpu_ss_period_mode    
+    chmod 0664 /proc/cpu_ss/cpu_ss_debug_mode   
+    chmod 0664 /proc/cpu_ss/cpu_ss_mode 
+    chmod 0664 /proc/cpu_ss/cpu_ss_period   
+    chmod 0664 /proc/cpu_ss/cpu_ss_period_mode  
+    #EM eint    
+    chown root diag /sys/bus/platform/drivers/eint/current_eint
 
     # for ppp options file
     mkdir /data/misc/ppp 0770 bluetooth net_bt
@@ -461,8 +472,8 @@ service wlanLoader /system/bin/wlan_loader
 
 service nvram_daemon /system/bin/nvram_daemon
     class main
-    user root
-    group root system
+    user nvram
+    group nvram system
     oneshot
 
 service NvRAMAgent /system/bin/nvram_agent_binder
@@ -606,8 +617,8 @@ service geomagneticd /system/bin/geomagneticd
 
 service drvbd /system/bin/drvbd
     class main
-    user root
-    group root
+    user system
+    group system
 
 # thermal
 service thermal_manager /system/bin/thermal_manager
