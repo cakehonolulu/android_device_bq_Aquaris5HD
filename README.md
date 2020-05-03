@@ -4,12 +4,12 @@ This is the working device tree for the mt6589 based bq Aquaris 5 HD, needed for
 # What works:
 
 Wi-Fi \
+Bluetooth \
 Device Backlights
 
 # What doesn't work:
 VPN \
 GPS \
-Bluetooth \
 Audio \
 Radio FM \
 Video playback can freeze: this bug is related to mtk codec. MTK Encoders are also initialized during video playback and this causes crashes. \
