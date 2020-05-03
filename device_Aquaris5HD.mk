@@ -46,7 +46,13 @@ PRODUCT_COPY_FILES += \
 
 # Set default USB interface
 PRODUCT_PROPERTY_OVERRIDES += \
-    persist.sys.usb.config=mtp,adb
+    persist.sys.usb.config=mtp,adb \
+    ro.allow.mock.location=0 \
+    ro.debuggable=1 \
+    persist.service.adb.enable=1 \
+    persist.service.debuggable=1 \
+    ro.secure=0 \
+    ro.adb.secure=0
 
 # MTK Shims
 PRODUCT_PACKAGES += \
@@ -73,6 +79,33 @@ PRODUCT_TAGS += dalvik.gc.type-precise
 PRODUCT_PACKAGES += \
 	gsm0710muxd
 
+# audio 
+PRODUCT_PACKAGES += \
+    libaudio.primary.default \
+    audio_policy.mt6589 \
+    audio.primary.mt6589 \
+    audio.r_submix.default \
+    audio.a2dp.default \
+    audio.usb.default \
+    audio_policy.default \
+    audio_policy.stub \
+    libblisrc \
+    libdpframework \
+    libaudiosetting \
+    libvcodecdrv \
+    libstagefright_memutil \
+    libcustom_prop \
+    libnvram \
+    libaudiocustparam \
+    libaudiocompensationfilter \
+    libcvsd_mtk \
+    libmsbc_mtk \
+    libaed \
+    libaudiocomponentengine \
+    libaudiodcrflt \
+    libbluetoothdrv \
+    libspeech_enh_lib
+
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/audio_policy.conf:system/etc/audio_policy.conf
     
@@ -88,7 +121,7 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:system/etc/media_codecs_google_audio.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:system/etc/media_codecs_google_telephony.xml \
-    frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:system/etc/media_codecs_google_video.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:system/etc/media_codecs_google_video.xml \
 	$(LOCAL_PATH)/configs/media_codecs.xml:system/etc/media_codecs.xml \
 	$(LOCAL_PATH)/configs/media_profiles.xml:system/etc/media_profiles.xml
 
@@ -178,6 +211,7 @@ TARGET_SCREEN_WIDTH := 720
 # Use high-density artwork where available
 PRODUCT_LOCALES += xhdpi
 PRODUCT_AAPT_CONFIG := xhdpi
+PRODUCT_AAPT_PREF_CONFIG := xhdpi
 
 $(call inherit-product, frameworks/native/build/phone-xhdpi-1024-dalvik-heap.mk)
 
