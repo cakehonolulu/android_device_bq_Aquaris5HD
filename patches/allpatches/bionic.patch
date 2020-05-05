@@ -1,0 +1,112 @@
+diff --git a/libc/arch-arm/cortex-a7/cortex-a7.mk b/libc/arch-arm/cortex-a7/cortex-a7.mk
+index 646c8b61..f2dffbf9 100644
+--- a/libc/arch-arm/cortex-a7/cortex-a7.mk
++++ b/libc/arch-arm/cortex-a7/cortex-a7.mk
+@@ -3,7 +3,6 @@ libc_bionic_src_files_arm += \
+ 
+ libc_bionic_src_files_arm += \
+     arch-arm/cortex-a15/bionic/memchr.S \
+-    arch-arm/cortex-a15/bionic/memcpy.S \
+     arch-arm/cortex-a15/bionic/strcat.S \
+     arch-arm/cortex-a15/bionic/__strcat_chk.S \
+     arch-arm/cortex-a15/bionic/strcmp.S \
+@@ -16,3 +15,12 @@ libc_bionic_src_files_arm += \
+ 
+ libc_bionic_src_files_arm += \
+     arch-arm/denver/bionic/memmove.S \
++
++# Optimization not required for some targets
++ifeq ($(TARGET_CPU_MEMCPY_OPT_DISABLE),true)
++libc_bionic_src_files_arm += \
++    arch-arm/cortex-a7/bionic/memcpy.S
++else
++libc_bionic_src_files_arm += \
++    arch-arm/cortex-a15/bionic/memcpy.S
++endif
+\ No newline at end of file
+diff --git a/linker/Android.mk b/linker/Android.mk
+index 4298032a..e9b86242 100644
+--- a/linker/Android.mk
++++ b/linker/Android.mk
+@@ -53,6 +53,10 @@ LOCAL_FORCE_STATIC_EXECUTABLE := true # not necessary when not including BUILD_E
+ 
+ LOCAL_2ND_ARCH_VAR_PREFIX := $(linker_2nd_arch_var_prefix)
+ 
++ifeq ($(TARGET_NEEDS_NON_PIE_SUPPORT),true)
++  LOCAL_CFLAGS += -DENABLE_NON_PIE_SUPPORT
++endif
++
+ LOCAL_MODULE := linker
+ LOCAL_MODULE_STEM_32 := linker
+ LOCAL_MODULE_STEM_64 := linker64
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index 54867dce..427b930d 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -63,6 +63,7 @@
+  *
+  * open issues / todo:
+  *
++ * - are we doing everything we should for ARM_COPY relocations?
+  * - cleaner error reporting
+  * - after linking, set as much stuff as possible to READONLY
+  *   and NOEXEC
+@@ -1465,6 +1466,7 @@ int soinfo::Relocate(ElfW(Rel)* rel, unsigned count) {
+         *reinterpret_cast<ElfW(Addr)*>(reloc) += sym_addr - rel->r_offset;
+         break;
+       case R_ARM_COPY:
++#ifndef ENABLE_NON_PIE_SUPPORT
+         /*
+          * ET_EXEC is not supported so this should not happen.
+          *
+@@ -1476,6 +1478,50 @@ int soinfo::Relocate(ElfW(Rel)* rel, unsigned count) {
+          */
+         DL_ERR("%s R_ARM_COPY relocations are not supported", name);
+         return -1;
++#else
++            if ((flags & FLAG_EXE) == 0) {
++                /*
++                 * http://infocenter.arm.com/help/topic/com.arm.doc.ihi0044d/IHI0044D_aaelf.pdf
++                 *
++                 * Section 4.7.1.10 "Dynamic relocations"
++                 * R_ARM_COPY may only appear in executable objects where e_type is
++                 * set to ET_EXEC.
++                 *
++                 * TODO: FLAG_EXE is set for both ET_DYN and ET_EXEC executables.
++                 * We should explicitly disallow ET_DYN executables from having
++                 * R_ARM_COPY relocations.
++                 */
++                DL_ERR("%s R_ARM_COPY relocations only supported for ET_EXEC", name);
++                return -1;
++            }
++            count_relocation(kRelocCopy);
++            MARK(rel->r_offset);
++            TRACE_TYPE(RELO, "RELO %08x <- %d @ %08x %s", reloc, s->st_size, sym_addr, sym_name);
++            if (reloc == sym_addr) {
++                ElfW(Sym)* src = soinfo_do_lookup(NULL, sym_name, &lsi);
++
++                if (src == NULL) {
++                    DL_ERR("%s R_ARM_COPY relocation source cannot be resolved", name);
++                    return -1;
++                }
++                if (lsi->has_DT_SYMBOLIC) {
++                    DL_ERR("%s invalid R_ARM_COPY relocation against DT_SYMBOLIC shared "
++                           "library %s (built with -Bsymbolic?)", name, lsi->name);
++                    return -1;
++                }
++                if (s->st_size < src->st_size) {
++                    DL_ERR("%s R_ARM_COPY relocation size mismatch (%d < %d)",
++                           name, s->st_size, src->st_size);
++                    return -1;
++                }
++                memcpy(reinterpret_cast<void*>(reloc),
++                       reinterpret_cast<void*>(src->st_value + lsi->load_bias), src->st_size);
++            } else {
++                DL_ERR("%s R_ARM_COPY relocation target cannot be resolved", name);
++                return -1;
++            }
++            break;
++#endif
+ #elif defined(__i386__)
+       case R_386_JMP_SLOT:
+         count_relocation(kRelocAbsolute);

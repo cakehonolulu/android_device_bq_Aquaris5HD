@@ -1,0 +1,388 @@
+diff --git a/include/media/editor/II420ColorConverter.h b/include/media/editor/II420ColorConverter.h
+index 33af61ff9..e8f513d86 100644
+--- a/include/media/editor/II420ColorConverter.h
++++ b/include/media/editor/II420ColorConverter.h
+@@ -25,6 +25,26 @@
+ extern "C" {
+ #endif
+ 
++#ifdef MTK_HARDWARE
++typedef struct MTK_PLATFORM_PRIVATE {
++    unsigned long mM4UMVABufferPa;
++    unsigned long mM4UVABufferVa;
++    //add next private members
++} MTK_PLATFORM_PRIVATE;
++
++typedef struct MtkI420ColorConverterInfo {
++    int64_t mProfileColorConvCnt;
++    int64_t mProfileColorConvout_timeMin;
++    int64_t mProfileColorConvout_timeMax;
++    int64_t mProfileColorConvout_timeAvg;
++    int64_t mProfileColorConvout_out_timeTotal;
++
++    int mEnableMVA;
++    int mEnableION;
++    int mSrcFormat;
++    int mDstFormat;
++}MtkI420ColorConverterInfo;
++#endif
+ typedef struct II420ColorConverter {
+ 
+     /*
+@@ -112,6 +132,20 @@ typedef struct II420ColorConverter {
+         int srcWidth, int srcHeight,
+         int* encoderWidth, int* encoderHeight,
+         ARect* encoderRect, int* encoderBufferSize);
++#ifdef MTK_HARDWARE
++    int (*setDecoderOutputFormat)(II420ColorConverter *converter, int mOutFormat);
++    int (*setEncoderInputFormat)(II420ColorConverter *converter, int mInFormat);
++    int (*initACodecColorConverter) (II420ColorConverter *converter, void** BufHandler, int mEnableMVA);
++    int (*deinitACodecColorConverter) (II420ColorConverter *converter, void* BufHandler);
++    int (*getVideoAllocMVA) (II420ColorConverter *converter, void* BufHandler, unsigned long a_u4Va, 
++        unsigned long* ap_u4Pa, unsigned long a_u4Size, void *a_pvM4uConfig_p);
++    int (*freeVideoAllocMVA) (II420ColorConverter *converter, void* BufHandler, unsigned long a_u4Va, 
++        unsigned long ap_u4Pa, unsigned long a_u4Size, void *a_pvM4uConfig_p);
++    int (*secondConvertDecoderOutputToI420) (
++        II420ColorConverter *converter, void* srcBits, int srcWidth, int srcHeight, ARect srcRect, void* dstBits);
++
++    MtkI420ColorConverterInfo *mMtkColorConvertInfo;
++#endif
+ 
+ } II420ColorConverter;
+ 
+diff --git a/include/media/openmax/OMX_Core.h b/include/media/openmax/OMX_Core.h
+index 12f2b3baf..99bd0e532 100644
+--- a/include/media/openmax/OMX_Core.h
++++ b/include/media/openmax/OMX_Core.h
+@@ -409,7 +409,13 @@ typedef struct OMX_PARAM_COMPONENTROLETYPE {
+  */
+ #define OMX_BUFFERFLAG_CODECCONFIG 0x00000080
+ 
++#ifdef MTK_HARDWARE
++// <--- Morris Yang 20110322 add for RV resizing
++#define OMX_BUFFERFLAG_SPECIFYRESOLUTION 0x00000100
+ 
++// for invalid pts file
++#define OMX_BUFFERFLAG_INVALID_TIMESTAMP 0x00000800
++#endif
+ 
+ /** @ingroup buf */
+ typedef struct OMX_BUFFERHEADERTYPE
+@@ -457,6 +463,12 @@ typedef struct OMX_BUFFERHEADERTYPE
+                                      this buffer */
+   OMX_U32 nInputPortIndex;      /**< The index of the input port (if any) using
+                                      this buffer */
++#ifdef MTK_HARDWARE
++  OMX_U32 nWidth;
++  OMX_U32 nHeight;
++  OMX_U32 nStride;
++  OMX_U32 nSliceHeight;
++#endif
+ } OMX_BUFFERHEADERTYPE;
+ 
+ /** The OMX_EXTRADATATYPE enumeration is used to define the
+@@ -506,6 +518,11 @@ typedef enum OMX_EVENTTYPE
+    OMX_EventComponentResumed,     /**< Component resumed due to reacquisition of resources */
+    OMX_EventDynamicResourcesAvailable, /**< Component has acquired previously unavailable dynamic resources */
+    OMX_EventPortFormatDetected,      /**< Component has detected a supported format. */
++#ifdef MTK_HARDWARE
++// <--- Morris Yang 20110322 add for RV resizing
++   OMX_EventPortResolutionChanged,
++   OMX_EventComponentInfoNotified,  /**< component has notified infomation for IL */
++#endif
+    OMX_EventKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */
+    OMX_EventVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
+    OMX_EventMax = 0x7FFFFFFF
+diff --git a/include/media/openmax/OMX_IVCommon.h b/include/media/openmax/OMX_IVCommon.h
+index a5b9d1876..d998ac782 100644
+--- a/include/media/openmax/OMX_IVCommon.h
++++ b/include/media/openmax/OMX_IVCommon.h
+@@ -149,6 +149,10 @@ typedef enum OMX_COLOR_FORMATTYPE {
+     OMX_COLOR_Format24BitABGR6666,
+     OMX_COLOR_FormatKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */
+     OMX_COLOR_FormatVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
++#ifdef MTK_HARDWARE
++    OMX_COLOR_FormatVendorMTKYUV = 0x7F000001,
++    OMX_COLOR_FormatVendorMTKYUV_FCM = 0x7F000002,
++#endif
+     /**<Reserved android opaque colorformat. Tells the encoder that
+      * the actual colorformat will be  relayed by the
+      * Gralloc Buffers.
+@@ -163,8 +167,10 @@ typedef enum OMX_COLOR_FORMATTYPE {
+      *  codec can substitute any YUV420 packed planar or semiplanar
+      *  format for it. */
+     OMX_COLOR_FormatYUV420Flexible = 0x7F420888,
+-
+     OMX_TI_COLOR_FormatYUV420PackedSemiPlanar = 0x7F000100,
++#ifdef MTK_HARDWARE
++    OMX_MTK_COLOR_FormatYV12 = 0x7F000200,
++#endif
+     OMX_QCOM_COLOR_FormatYVU420SemiPlanar = 0x7FA30C00,
+     OMX_QCOM_COLOR_FormatYUV420PackedSemiPlanar64x32Tile2m8ka = 0x7FA30C03,
+     OMX_SEC_COLOR_FormatNV12Tiled = 0x7FC00002,
+diff --git a/include/media/openmax/OMX_Index.h b/include/media/openmax/OMX_Index.h
+index 1a2a548e8..f8af98caa 100644
+--- a/include/media/openmax/OMX_Index.h
++++ b/include/media/openmax/OMX_Index.h
+@@ -262,6 +262,33 @@ typedef enum OMX_INDEXTYPE {
+        private indexes are not guaranteed unique and therefore should
+        only be sent to the appropriate component. */
+ 
++#ifdef MTK_HARDWARE
++    OMX_IndexVendorMtkOmxVdecTimeSource = 0x7F000001,
++    OMX_IndexVendorMtkOmxVdecPriorityAdjustment,
++    OMX_IndexVendorMtkOmxVdecVideoSpecQuerySupported,
++    OMX_GoogleAndroidIndexEnableAndroidNativeBuffers,
++    OMX_GoogleAndroidIndexUseAndroidNativeBuffer,
++    OMX_GoogleAndroidIndexGetAndroidNativeBufferUsage,
++    OMX_GoogleAndroidIndexStoreMetaDataInBuffers,   // Morris Yang 20120214 add for live effect recording
++    OMX_IndexVendorMtkOmxPartialFrameQuerySupported,
++
++	OMX_IndexVendorMtkOmxVdecThumbnailMode,
++	OMX_IndexVendorMtkOmxVdecSeekMode,
++    OMX_IndexVendorMtkOmxVdecSwitchBwTVout,
++    OMX_IndexVendorMtkOmxVencSetForceIframe,
++    OMX_IndexVendorMtkOmxVencSetTimelapseMode,
++    OMX_IndexVendorMtkOmxVencSetMCIMode,
++
++    OMX_IndexVendorMtkOmxVdecConcealmentLevel,
++    OMX_IndexVendorMtkOmxVdecStreamingMode,
++
++    OMX_IndexVendorMtkMP3Decode,
++    OMX_IndexVendorMtkOmxVdec3DVideoPlayback,
++    OMX_IndexVendorMtkOmxVenc3DVideoRecode,
++    OMX_IndexVendorMtkOmxVdecGetAspectRatio,
++    OMX_IndexVendorMtkOmxVencUseIonBuffer,    // Morris Yang 20121203 for Venc ION path
++    OMX_IndexVendorMtkOmxVencSetIInterval,
++#endif
+     OMX_IndexMax = 0x7FFFFFFF
+ 
+ } OMX_INDEXTYPE;
+diff --git a/include/media/openmax/OMX_Video.h b/include/media/openmax/OMX_Video.h
+index decc410ba..819efa06c 100644
+--- a/include/media/openmax/OMX_Video.h
++++ b/include/media/openmax/OMX_Video.h
+@@ -85,6 +85,7 @@ typedef enum OMX_VIDEO_CODINGTYPE {
+     OMX_VIDEO_CodingRV,         /**< all versions of Real Video */
+     OMX_VIDEO_CodingAVC,        /**< H.264/AVC */
+     OMX_VIDEO_CodingMJPEG,      /**< Motion JPEG */
++//    OMX_VIDEO_CodingVPX,        /**< VPX added by Legis Lu 20110714*/
+     OMX_VIDEO_CodingVP8,        /**< Google VP8, formerly known as On2 VP8 */
+     OMX_VIDEO_CodingVP9,        /**< Google VP9 */
+     OMX_VIDEO_CodingHEVC,       /**< ITU H.265/HEVC */
+@@ -241,6 +242,9 @@ typedef enum OMX_VIDEO_CONTROLRATETYPE {
+     OMX_Video_ControlRateConstantSkipFrames,
+     OMX_Video_ControlRateKhronosExtensions = 0x6F000000, /**< Reserved region for introducing Khronos Standard Extensions */
+     OMX_Video_ControlRateVendorStartUnused = 0x7F000000, /**< Reserved region for introducing Vendor Extensions */
++#ifdef MTK_HARDWARE
++    OMX_Video_ControlRateMtkWFD = 0x7F000001,   //for wifi-display mode
++#endif
+     OMX_Video_ControlRateMax = 0x7FFFFFFF
+ } OMX_VIDEO_CONTROLRATETYPE;
+ 
+diff --git a/include/ui/GraphicBuffer.h b/include/ui/GraphicBuffer.h
+index 3a5b10d04..8de74cd41 100644
+--- a/include/ui/GraphicBuffer.h
++++ b/include/ui/GraphicBuffer.h
+@@ -166,6 +166,10 @@ private:
+     sp<ANativeWindowBuffer> mWrappedBuffer;
+ 
+     uint64_t mId;
++#ifdef MTK_MT6589
++public:
++    status_t getIonFd(int *idx, int *num);
++#endif
+ };
+ 
+ }; // namespace android
+diff --git a/include/ui/GraphicBufferMapper.h b/include/ui/GraphicBufferMapper.h
+index 0ffc582cb..e10492273 100644
+--- a/include/ui/GraphicBufferMapper.h
++++ b/include/ui/GraphicBufferMapper.h
+@@ -62,6 +62,10 @@ public:
+     status_t getphys(buffer_handle_t handle, void** paddr);
+ #endif
+ 
++#ifdef MTK_MT6589
++    status_t getIonFd(buffer_handle_t handle, int *idx, int *num);
++#endif
++
+     // dumps information about the mapping of this handle
+     void dump(buffer_handle_t handle);
+ 
+@@ -69,6 +73,11 @@ private:
+     friend class Singleton<GraphicBufferMapper>;
+     GraphicBufferMapper();
+     gralloc_module_t const *mAllocMod;
++
++#ifdef MTK_MT6589
++    ~GraphicBufferMapper();
++    extra_device_t *mExtraDev;
++#endif
+ };
+ 
+ // ---------------------------------------------------------------------------
+diff --git a/libs/ui/Android.mk b/libs/ui/Android.mk
+index 299167168..045d3c617 100644
+--- a/libs/ui/Android.mk
++++ b/libs/ui/Android.mk
+@@ -42,6 +42,10 @@ ifeq ($(BOARD_HAVE_PIXEL_FORMAT_INFO),true)
+ LOCAL_CFLAGS += -DHAVE_PIXEL_FORMAT_INFO
+ endif
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++endif
++
+ LOCAL_MODULE:= libui
+ 
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libs/ui/GraphicBuffer.cpp b/libs/ui/GraphicBuffer.cpp
+index 4c46deb6d..8796219ed 100644
+--- a/libs/ui/GraphicBuffer.cpp
++++ b/libs/ui/GraphicBuffer.cpp
+@@ -412,6 +412,13 @@ status_t GraphicBuffer::unflatten(
+     return NO_ERROR;
+ }
+ 
++#ifdef MTK_MT6589
++status_t GraphicBuffer::getIonFd(int *idx, int *num)
++{
++    return getBufferMapper().getIonFd(handle, idx, num);
++}
++
++#endif
+ // ---------------------------------------------------------------------------
+ 
+ }; // namespace android
+diff --git a/libs/ui/GraphicBufferMapper.cpp b/libs/ui/GraphicBufferMapper.cpp
+index ce76e7acb..c771a4438 100644
+--- a/libs/ui/GraphicBufferMapper.cpp
++++ b/libs/ui/GraphicBufferMapper.cpp
+@@ -46,8 +46,21 @@ GraphicBufferMapper::GraphicBufferMapper()
+     if (err == 0) {
+         mAllocMod = (gralloc_module_t const *)module;
+     }
++#ifdef MTK_MT6589
++    mExtraDev = NULL;
++    if (err == 0) {
++        gralloc_extra_open(module, &mExtraDev);
++    }
++#endif
+ }
+ 
++#ifdef MTK_MT6589
++GraphicBufferMapper::~GraphicBufferMapper()
++{
++    gralloc_extra_close(mExtraDev);
++}
++#endif
++
+ status_t GraphicBufferMapper::registerBuffer(buffer_handle_t handle)
+ {
+     ATRACE_CALL();
+@@ -191,6 +204,24 @@ status_t GraphicBufferMapper::getphys(buffer_handle_t handle, void** paddr)
+ }
+ #endif
+ 
++#ifdef MTK_MT6589
++status_t GraphicBufferMapper::getIonFd(buffer_handle_t handle, int *idx, int *num)
++{
++    ATRACE_CALL();
++    status_t err;
++
++    if (!mExtraDev) {
++        ALOGE("gralloc extra device is not supported");
++        return INVALID_OPERATION;
++    }
++
++    err = mExtraDev->getIonFd(mExtraDev, handle, idx, num);
++
++    ALOGW_IF(err, "getIonFd(...) failed %d (%s)", err, strerror(-err));
++    return err;
++}
++#endif
++
+ 
+ // ---------------------------------------------------------------------------
+ }; // namespace android
+diff --git a/opengl/libagl/egl.cpp b/opengl/libagl/egl.cpp
+index 24e32598b..7b56262f6 100644
+--- a/opengl/libagl/egl.cpp
++++ b/opengl/libagl/egl.cpp
+@@ -2051,6 +2051,13 @@ EGLImageKHR eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum target,
+         case HAL_PIXEL_FORMAT_RGB_888:
+         case HAL_PIXEL_FORMAT_RGB_565:
+         case HAL_PIXEL_FORMAT_BGRA_8888:
++ //shallytest, for sw gralloc interface
++        case HAL_PIXEL_FORMAT_YV12:
++        case HAL_PIXEL_FORMAT_I420:
++        case HAL_PIXEL_FORMAT_NV12_BLK:
++        case HAL_PIXEL_FORMAT_NV12_BLK_FCM:
++        //~shallytest, for sw gralloc interface
++
+             break;
+         default:
+             return setError(EGL_BAD_PARAMETER, EGL_NO_IMAGE_KHR);
+diff --git a/opengl/libs/EGL/eglApi.cpp b/opengl/libs/EGL/eglApi.cpp
+index 937665b86..e9fb2d5af 100644
+--- a/opengl/libs/EGL/eglApi.cpp
++++ b/opengl/libs/EGL/eglApi.cpp
+@@ -139,11 +139,13 @@ static const extention_map_t sExtensionMap[] = {
+     { "eglGetSyncAttribKHR",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSyncAttribKHR },
+ 
++#ifndef MTK_HARDWARE
+     // EGL_NV_system_time
+     { "eglGetSystemTimeFrequencyNV",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeFrequencyNV },
+     { "eglGetSystemTimeNV",
+             (__eglMustCastToProperFunctionPointerType)&eglGetSystemTimeNV },
++#endif
+ 
+     // EGL_KHR_wait_sync
+     { "eglWaitSyncKHR",
+@@ -1610,6 +1612,7 @@ EGLBoolean eglGpuPerfHintQCOM(EGLDisplay dpy, EGLContext ctx, EGLint *attrib_lis
+ // ----------------------------------------------------------------------------
+ // NVIDIA extensions
+ // ----------------------------------------------------------------------------
++#ifndef MTK_HARDWARE
+ EGLuint64NV eglGetSystemTimeFrequencyNV()
+ {
+     clearError();
+@@ -1645,3 +1648,4 @@ EGLuint64NV eglGetSystemTimeNV()
+ 
+     return setErrorQuiet(EGL_BAD_DISPLAY, 0);
+ }
++#endif
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index f9a6852b6..ae9f84279 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -40,6 +40,10 @@ LOCAL_SRC_FILES:= \
+ LOCAL_CFLAGS:= -DLOG_TAG=\"SurfaceFlinger\"
+ LOCAL_CFLAGS += -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
+ 
++ifeq ($(TARGET_BOARD_PLATFORM),mt6589)
++LOCAL_CFLAGS += -DMTK_MT6589
++endif
++
+ ifeq ($(TARGET_BOARD_PLATFORM),omap4)
+ 	LOCAL_CFLAGS += -DHAS_CONTEXT_PRIORITY
+ endif
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index ca3f0279f..614eedb7d 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -3747,6 +3747,11 @@ status_t SurfaceFlinger::captureScreenImplLocked(
+         bool useReadPixels)
+ {
+     ATRACE_CALL();
++    
++// Rotation artifact problems when useReadPixels is false
++#ifdef MTK_MT6589
++    useReadPixels = true;
++#endif
+ 
+     // get screen geometry
+     const uint32_t hw_w = hw->getWidth();
